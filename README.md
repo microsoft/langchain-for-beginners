@@ -14,87 +14,75 @@ A course teaching everything you need to know to start building AI Agents with L
 [![GitHub forks](https://img.shields.io/github/forks/microsoft/langchain-for-beginners.svg?style=social&label=Fork)](https://github.com/microsoft/langchain-for-beginners/)
 [![GitHub stars](https://img.shields.io/github/stars/microsoft/langchain-for-beginners.svg?style=social&label=Star)](https://github.com/microsoft/langchain-for-beginners/)
 
-## 🚀 Welcome!
+## 🦜🔗 Getting Started
 
-Welcome to **LangChain for Beginners**, your hands-on guide to building AI-powered applications with LangChain and Python.
+Welcome to **LangChain for Beginners**! This course has lessons covering the fundamentals of building with LangChain. Each [lesson]() covers its own topic so start wherever you like!
 
-Building an AI application is a lot like cooking a gourmet meal. You can gather every ingredient yourself, make each sauce from scratch, and craft your own tools. Or, you can work in a well-equipped kitchen stocked with quality ingredients and reliable recipes. **LangChain.js is that well-equipped kitchen for AI development.**
+Don't forget to [star (🌟) this repo]() and [fork this repo]() to run the code.
 
-### What You'll Learn and Build
+### 👫 Meet Other Learners, Get Your Questions Answered
 
-This course takes you from zero to building robust AI applications:
-
-- **🤖 Conversational AI** - Build context-aware chatbots with streaming responses and customizable behavior
-- **🔍 Semantic Search** - Create search systems that understand meaning, not just keywords
-- **🛠️ Function Calling & Tools** - Give AI the ability to use tools and extract structured data
-- **🚀 Autonomous Agents** - Build agents that reason, make decisions, and choose tools autonomously
-- **🌐 MCP Integration** - Connect AI to external services using the Model Context Protocol standard
-- **🎯 Agentic RAG** - Build intelligent Q&A systems where agents decide when to search your knowledge base
-
-**By the end**, you'll have a solid understanding of LangChain.js and understand how to build real AI applications you can deploy!
-
-> [!TIP]
-> **New to AI development?** Check out our companion course [**Generative AI with JavaScript**](https://github.com/microsoft/generative-ai-with-javascript) to learn AI fundamentals first!
-
----
-
-## 📚 Table of Contents
-
-This course contains **9 chapters** (setup + 8 chapters), each building on the previous to teach you LangChain.js from the ground up. Each chapter includes conceptual explanations, working code examples, and hands-on challenges.
-
-| # | Chapter | Description | Key Concepts |
-|---|---------|-------------|--------------|
-| 0 | [Course Setup](./00-course-setup/README.md) | Get your development environment ready | Environment setup, AI provider configuration |
-| 1 | [Introduction to LangChain.js](./01-introduction/README.md) | Understanding the framework and core concepts | LangChain fundamentals, first LLM call |
-| 2 | [Chat Models & Basic Interactions](./02-chat-models/README.md) | Chat models, messages, and conversations | Message types, streaming, error handling, temperature |
-| 3 | [Prompts, Messages, and Structured Outputs](./03-prompts-messages-outputs/README.md) | Working with prompts, message arrays, and type-safe outputs | Messages, templates, structured outputs, Zod schemas |
-| 4 | [Function Calling & Tools](./04-function-calling-tools/README.md) | Extending AI capabilities with function calling and tools | Zod schemas, tool binding, type safety |
-| 5 | [Getting Started with Agents](./05-agents/README.md) | Building autonomous agents that reason and choose tools | ReAct pattern, agent loops, createAgent(), middleware |
-| 6 | [Model Context Protocol (MCP)](./06-mcp/README.md) | Connecting AI to external services using the MCP standard | MCP servers, transport types, tool integration, multi-server patterns |
-| 7 | [Documents, Embeddings & Semantic Search](./07-documents-embeddings-semantic-search/README.md) | Loading documents, creating embeddings, and building semantic search | Document loading, chunking, vector embeddings, similarity search |
-| 8 | [Building Agentic RAG Systems](./08-agentic-rag-systems/README.md) | Building RAG systems where agents intelligently decide when to search documents | Agentic RAG (agents decide when to search), retrieval tools, intelligent Q&A |
-
-Each chapter includes:
-- 📖 **Conceptual explanations** with real-world analogies
-- 💻 **Code examples** you can run immediately
-- 🎯 **Hands-on challenges** to test your understanding
-- 🔑 **Key takeaways** to reinforce learning
-
-We're planning to expand this course over time with additional topics as well. Stay tuned for updates!
-
----
+If you get stuck or have any questions about building AI Agents, join our dedicated Discord Channel in the [Azure AI Foundry Community Discord](https://aka.ms/langchain-foundry/discord).
 
 ## 📋 Prerequisites
 
 Before starting this course, you should be comfortable with:
 
-- **JavaScript/TypeScript fundamentals** - Variables, functions, objects, async/await
-- **Node.js (LTS)** and npm - Package management and CLI tools
-- **Basic Generative AI concepts** - Basic understanding of LLMs, prompts, tokens which are covered in our [GenAI with JavaScript](https://github.com/microsoft/generative-ai-with-javascript) course
+- **Python fundamentals** - Variables, functions, objects, async/await, pip for package installation
+- **Basic Generative AI concepts** - Basic understanding of LLMs, prompts, tokens which are covered in our [GenAI for Beginners](https://github.com/microsoft/generative-ai-for-beginners) course
 
 ### Required Tools
 
-- [Node.js (LTS)](https://nodejs.org/)
+- [Python 3.12 or later](https://python.org/)
 - Code editor ([VS Code recommended](https://code.visualstudio.com/))
-- Terminal/Command line
-- [Git](https://git-scm.com/)
 
-### AI Provider Account
+### Acessing LLMs
 
-You'll need access to an AI provider. We recommend:
+Each lesson in this course includes code examples, which can be found in the code_samples folder. You can [fork this repo](https://github.com/microsoft/langchain-for-beginners/fork) to create your own copy.  
 
-- ✅ **GitHub Models** - Free for learning and experimentation
-- ✅ **Azure AI Foundry** - For production deployments
+The code example in these exercises, utilize Azure AI Foundry and GitHub Model Catalogs for interacting with Language Models:
+
+- [Github Models](https://aka.ms/ai-agents-beginners/github-models) - Free / Limited
+- [Azure AI Foundry](https://aka.ms/ai-agents-beginners/ai-foundry) - Azure Account Required
+
+For more information on running the code for this course, go to the [Course Setup](./00-course-setup/README.md).
+
+## 🙏 Want to help?
+
+Do you have suggestions or found spelling or code errors? [Raise an issue](https://github.com/microsoft/langchain-for-beginners/issues) or [Create a pull request](https://github.com/microsoft/langchain-for-beginners/pull). 
+
+## 📂 Each lesson includes
+
+- A written lesson located in the README and a short video
+- Python code samples supporting Azure AI Foundry and Github Models (Free)
+- Links to extra resources to continue your learning
+
+---
+## 🗃️ Lessons
+
+| #  | **Lesson**                                   | **Text & Code**                                    | **Video**                                                  | **Extra Learning**                                                                     |
+|----|----------------------------------------------|----------------------------------------------------|------------------------------------------------------------|----------------------------------------------------------------------------------------|
+| 0  | Course Setup                                 | [Link](./00-course-setup/README.md)                | [Video]()  | [Link]() |
+| 1  | Intro to LangChain and Agent Use Cases       | [Link](./01-introduction/README.md)                | [Video]()  | [Link]() |
+| 2  | Chat Models & Basic Interactions             | [Link](./02-chat-models/README.md)                 | [Video]()  | [Link]() |
+| 3  | Prompts, Messages, and Structured Outputs    | [Link](./03-prompts-messages-outputs/README.md)    | [Video]()  | [Link]() |
+| 4  | Function Calling & Tools                     | [Link](./04-function-calling-tools/README.md)      | [Video]()  | [Link]() |
+| 5  | Getting Started with Agents                  | [Link](./05-agents/README.md)                      | [Video]()  | [Link]() |
+| 6  | Model Context Protocol (MCP)                 | [Link](./06-mcp/README.md)                         | [Video]() | [Link]() |
+| 7  | Documents, Embeddings & Semantic Search      | [Link](./07-documents-embeddings-semantic-search/README.md) | [Video]()  | [Link]() |
+| 8  | Building Agentic RAG Systems                 | [Link](./08-agentic-rag-systems/README.md)         | [Video]()  | [Link]() |
+|    |                                                                                                |                                                            
+
+
+We're planning to expand this course over time with additional topics as well. Stay tuned for updates!
 
 ---
 
 ## 📖 Course Resources and Additional Samples
 
 - **[Glossary](./GLOSSARY.md)** - Comprehensive definitions of all terms used throughout the course
-- **[LangChain.js Documentation](https://docs.langchain.com/oss/javascript/langchain/overview)** - Official LangChain.js docs for deeper dives
-- **[AI Agent with MCP tools Sample](https://github.com/microsoft/ai-agents-for-beginners-sample)** - Learn how to build a complete burger ordering system with a serverless API, web interfaces, and an MCP server that enables AI agents to browse menus, place orders, and track order status.
-- **[AI Travel Agents Sample](https://github.com/Azure-Samples/azure-ai-travel-agents)** - Learn how to orchestrate multiple AI agents to create a travel planning application using Azure AI services.
-
+- **[LangChain Documentation](https://docs.langchain.com/oss/python/langchain/overview)** - Official LangChain docs for deeper dives
+- **[Email Agent Sample](https://github.com/microsoft/ai-agents-for-beginners-sample)** - Learn how to build an email agent with LangChain and MCP 
 ---
 
 ## Additional Resources 
