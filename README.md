@@ -15,7 +15,9 @@ A course teaching everything you need to know to start building AI Agents with L
 
 ## 🦜🔗 Welcome
 
-Welcome to **LangChain for Beginners**! This course has 7 lessons covering the fundamentals of building with LangChain and Python. Each [lesson](#️-lessons) covers its own topic so start wherever you like! You should always start on the `README.md` page of a lesson. To **get started** right away you can open [course-setup](/00-course-setup/), though you're encouraged to read the overview below first.
+Welcome to **LangChain for Beginners**! This course will cover the fundamentals of building with LangChain and Python. It contains [**9 lessons**](#️-lessons) that each focus on a specific concept.
+
+You should always start on the `README.md` page of a lesson. To **get started** right away you can navigate to the [course-setup](/00-course-setup/) chapter, but you're encouraged to read the overview below first.
 
 ### What You'll Learn and Build
 
@@ -30,7 +32,7 @@ This course takes you from zero to building robust AI applications:
 
 **By the end**, you'll have a solid understanding of LangChain and understand how to build real AI applications you can deploy!
 
-> **Teaching Approach:** This course uses an agent-first progression. You'll learn about tools, then agents, then combine them with document retrieval to build agentic RAG systems. This mirrors how modern production AI systems are built.
+> **Teaching Approach:** We use an agent-first progression. You'll learn about tools, then agents, then combine them with document retrieval to build agentic RAG systems. This mirrors how modern production AI systems are built.
 
 Don't forget to [star (🌟)](https://github.com/microsoft/langchain-for-beginners/stargazers) and [fork this repo](https://github.com/microsoft/langchain-for-beginners/fork) to run the code.
 
@@ -40,7 +42,7 @@ Don't forget to [star (🌟)](https://github.com/microsoft/langchain-for-beginne
 
 This course contains **9 chapters** (setup + 8 lessons), each building on the previous to teach you LangChain from the ground up. Each chapter includes conceptual explanations, working code examples, and hands-on challenges (videos coming soon.)
 
-| #  | **Lesson**                                   | **Text & Code**                                    | **Video**                                                  | **Extra Learning**                                                                     |
+| #  | **Lesson**                                   | **Lesson Link**                                    | **Video**                                                  | **Extra Learning**                                                                     |
 |----|----------------------------------------------|----------------------------------------------------|------------------------------------------------------------|----------------------------------------------------------------------------------------|
 | 0  | Course Setup                                 | [Link](./00-course-setup/README.md)                | [Video]()  | [Link]() |
 | 1  | Intro to LangChain and Agent Use Cases       | [Link](./01-introduction/README.md)                | [Video]()  | [Link]() |
@@ -77,7 +79,7 @@ Before starting this course, you should be comfortable with:
 
 ## 👫 Meet Other Learners, Get Your Questions Answered
 
-If you get stuck or have any questions about building AI Agents, join our dedicated Discord Channel in the [Azure AI Foundry Community Discord](https://aka.ms/langchain-foundry/discord).
+If you get stuck or have any questions about building AI Agents, join our dedicated LangChain Discord Channel in the [Azure AI Foundry Community Discord](https://aka.ms/langchain-foundry/discord).
 
 ## 🙏 Want to help?
 
