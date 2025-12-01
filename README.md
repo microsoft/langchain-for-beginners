@@ -4,11 +4,10 @@
 
 A course teaching everything you need to know to start building AI Agents with LangChain
 
-[![GitHub license](https://img.shields.io/github/license/microsoft/langchain-for-beginners.svg)](https://github.com/microsoft/langchain-for-beginners/blob/main/LICENSE)
+[![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/microsoft/langchain-for-beginners/blob/main/LICENSE)
 [![GitHub contributors](https://img.shields.io/github/contributors/microsoft/langchain-for-beginners.svg)](https://github.com/microsoft/langchain-for-beginners/graphs/contributors/)
 [![GitHub issues](https://img.shields.io/github/issues/microsoft/langchain-for-beginners.svg)](https://github.com/microsoft/langchain-for-beginners/issues/)
 [![GitHub pull-requests](https://img.shields.io/github/issues-pr/microsoft/langchain-for-beginners.svg)](https://github.com/microsoft/langchain-for-beginners/pulls/)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
 
 [![GitHub watchers](https://img.shields.io/github/watchers/microsoft/langchain-for-beginners.svg?style=social&label=Watch)](https://github.com/microsoft/langchain-for-beginners/)
 [![GitHub forks](https://img.shields.io/github/forks/microsoft/langchain-for-beginners.svg?style=social&label=Fork)](https://github.com/microsoft/langchain-for-beginners/)
