@@ -1,0 +1,8 @@
+# LangChain packages
+langchain-openai>=1.1.0
+langchain-core>=1.1.0
+langchain>=1.1.0
+langchain-azure-ai>=1.0.4
+
+# Utilities
+python-dotenv>=1.2.1
