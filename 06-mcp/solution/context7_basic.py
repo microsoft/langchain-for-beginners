@@ -60,8 +60,8 @@ async def main():
 
         # Step 5: Query for documentation
         queries = [
-            "How do I use Express.js middleware?",
-            "What are React hooks and how do I use useState?",
+            "How do I use FastAPI dependency injection?",
+            "What is Python's asyncio and how do I use async/await?",
         ]
 
         for query in queries:

@@ -117,7 +117,7 @@ async def main():
         # Step 6: Test with different queries
         queries = [
             "What is 125 * 8?",
-            "How do I use React hooks?",
+            "How do I use Python decorators?",
             "Calculate 50 + 25",
         ]
 

@@ -77,7 +77,7 @@ async def main():
         agent = create_agent(model, tools)  # Tools from MCP server - that's the only difference!
 
         # 5. Use the agent to get documentation
-        query = "How do I use React useState hook? Get the latest documentation."
+        query = "How do I use Python requests library to make HTTP GET requests? Get the latest documentation."
         print(f"👤 User: {query}\n")
 
         response = await agent.ainvoke({"messages": [("human", query)]})
