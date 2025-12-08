@@ -23,11 +23,9 @@ class CurrencyInput(BaseModel):
 
     amount: float = Field(description="The amount to convert")
     from_currency: str = Field(
-        alias="from",
         description="Source currency code (e.g., 'USD', 'EUR', 'GBP')",
     )
     to_currency: str = Field(
-        alias="to",
         description="Target currency code (e.g., 'USD', 'EUR', 'GBP')",
     )
 
@@ -70,11 +68,9 @@ class DistanceInput(BaseModel):
     """Input for distance calculator."""
 
     from_city: str = Field(
-        alias="from",
         description="Starting city name, e.g., 'New York' or 'Paris'",
     )
     to_city: str = Field(
-        alias="to",
         description="Destination city name, e.g., 'London' or 'Tokyo'",
     )
     units: Optional[Literal["miles", "kilometers"]] = Field(
@@ -169,7 +165,11 @@ def main():
     print("🌍 Multi-Tool Travel Assistant\n")
     print("=" * 80 + "\n")
 
-    model = ChatOpenAI(model=os.environ.get("AI_MODEL", "gpt-5-mini"))
+    model = ChatOpenAI(
+        model=os.getenv("AI_MODEL"),
+        base_url=os.getenv("AI_ENDPOINT"),
+        api_key=os.getenv("AI_API_KEY"),
+    )
 
     model_with_tools = model.bind_tools([
         currency_converter,
