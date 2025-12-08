@@ -103,25 +103,24 @@ async def main():
             print("   This is graceful degradation - app continues to work!")
 
         # Create base model
-        base_model = ChatOpenAI(
+        model = ChatOpenAI(
             model=os.getenv("AI_MODEL"),
             base_url=os.getenv("AI_ENDPOINT"),
             api_key=os.getenv("AI_API_KEY"),
         )
 
-        # Use LangChain's built-in retry logic - automatically handles exponential backoff!
-        model_with_retry = base_model.with_retry(stop_after_attempt=3)
+        # Note: with_retry() works on the model for API calls, but create_agent()
+        # needs the base model. For production, wrap agent.ainvoke() with retry logic.
+        print("✅ Model configured for agent use")
+        print("   - For retries, wrap agent.ainvoke() with tenacity or custom retry")
+        print("   - LangChain's with_retry() works on individual model calls")
 
-        print("✅ Model configured with automatic retry (max 3 attempts)")
-        print("   - LangChain handles exponential backoff automatically")
-        print("   - No custom retry loops needed!")
-
-        agent = create_agent(model_with_retry, tools)  # May be empty array if MCP failed
+        agent = create_agent(model, tools)  # Use base model with create_agent
 
         # Pattern 3: Execute with timeout and error handling
         print("\n\nPattern 3: Query Execution with Timeout\n")
 
-        query = "What is React? Get the latest documentation."
+        query = "How do I use Python's asyncio library? Get the latest documentation."
         print(f"👤 User: {query}")
 
         try:

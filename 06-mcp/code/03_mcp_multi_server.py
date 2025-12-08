@@ -90,7 +90,7 @@ async def main():
 
         # 5. Test 2: Agent uses CONTEXT7 tool
         print("Test 2: Documentation question (should use Context7)\n")
-        docs_query = "What is React? Get documentation."
+        docs_query = "How do I use FastAPI to create a REST API? Get documentation."
         print(f"👤 User: {docs_query}")
 
         docs_response = await agent.ainvoke({"messages": [("human", docs_query)]})
@@ -99,8 +99,8 @@ async def main():
         # 6. Test 3: Agent uses BOTH tools in sequence!
         print("Test 3: Combined question (should use BOTH tools)\n")
         combined_query = (
-            "Calculate 15 * 8, then find React documentation about that result "
-            "if it's a power of 2"
+            "Calculate 15 * 8, then look up Python documentation about "
+            "async/await if the result is greater than 100"
         )
         print(f"👤 User: {combined_query}")
 

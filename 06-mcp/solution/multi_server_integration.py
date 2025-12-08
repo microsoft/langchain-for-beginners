@@ -106,7 +106,7 @@ async def main():
         print()
 
         # Test 2: Use Context7 (HTTP server)
-        docs_query = "How do I use TypeScript interfaces?"
+        docs_query = "How do I use Python type hints?"
         print(f"👤 User: {docs_query}")
 
         docs_response = await agent.ainvoke({"messages": [("human", docs_query)]})
