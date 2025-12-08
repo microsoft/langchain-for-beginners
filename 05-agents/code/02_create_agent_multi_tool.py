@@ -1,7 +1,7 @@
 """
-Example 2: create_react_agent() with Multiple Tools
+Example 2: create_agent() with Multiple Tools
 
-This example demonstrates how create_react_agent() automatically selects
+This example demonstrates how create_agent() automatically selects
 the correct tool for each query from a set of available tools.
 
 The agent will:
@@ -10,15 +10,20 @@ The agent will:
 - Use the search tool for general information
 
 Run: python 05-agents/code/02_create_agent_multi_tool.py
+
+🤖 Try asking GitHub Copilot Chat (https://github.com/features/copilot):
+- "How does the agent decide which tool to use?"
+- "Can I prioritize certain tools over others?"
+- "How do tool descriptions affect tool selection?"
 """
 
 import os
 
 from dotenv import load_dotenv
+from langchain.agents import create_agent
 from langchain_core.messages import HumanMessage
 from langchain_core.tools import tool
 from langchain_openai import ChatOpenAI
-from langgraph.prebuilt import create_react_agent
 from pydantic import BaseModel, Field
 
 # Load environment variables
@@ -91,13 +96,17 @@ def search(query: str) -> str:
 
 
 def main():
-    print("🎛️  Multi-Tool Agent with create_react_agent()\n")
+    print("🎛️  Multi-Tool Agent with create_agent()\n")
 
     # Create model
-    model = ChatOpenAI(model=os.environ.get("AI_MODEL", "gpt-5-mini"))
+    model = ChatOpenAI(
+        model=os.getenv("AI_MODEL"),
+        base_url=os.getenv("AI_ENDPOINT"),
+        api_key=os.getenv("AI_API_KEY"),
+    )
 
     # Create agent with all three tools
-    agent = create_react_agent(model, tools=[calculator, get_weather, search])
+    agent = create_agent(model, tools=[calculator, get_weather, search])
 
     # Test with different queries - agent selects the right tool automatically
     queries = [
@@ -122,7 +131,7 @@ def main():
     print("✅ Production Pattern:")
     print("   This is how you build real-world agents:")
     print("   1. Define your tools")
-    print("   2. Pass them to create_react_agent()")
+    print("   2. Pass them to create_agent()")
     print("   3. Let the agent handle tool selection and execution")
 
 

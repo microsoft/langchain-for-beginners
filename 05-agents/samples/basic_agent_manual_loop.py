@@ -2,8 +2,8 @@
 Chapter 5 Example: Basic Agent with Manual Loop
 
 NOTE: This example demonstrates the agent pattern using a manual loop implementation.
-Compare this to the simplified create_react_agent() approach in the main code examples.
-In production, you would use LangGraph's built-in agent implementation.
+Compare this to the simplified create_agent() approach in the main code examples.
+In production, you would use LangChain's built-in agent implementation.
 
 Run: python 05-agents/samples/basic_agent_manual_loop.py
 
@@ -45,7 +45,11 @@ def main():
     print("🤖 Basic Agent Demo (Manual Loop)\n")
     print("=" * 80 + "\n")
 
-    model = ChatOpenAI(model=os.environ.get("AI_MODEL", "gpt-5-mini"))
+    model = ChatOpenAI(
+        model=os.getenv("AI_MODEL"),
+        base_url=os.getenv("AI_ENDPOINT"),
+        api_key=os.getenv("AI_API_KEY"),
+    )
 
     model_with_tools = model.bind_tools([calculator])
 

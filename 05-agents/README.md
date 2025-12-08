@@ -15,6 +15,7 @@ By the end of this chapter, you'll be able to:
 - ✅ Build agent loops that iterate until solving a problem
 - ✅ Give agents multiple tools and let them choose the right one
 - ✅ Use create_agent() for production-ready agent systems
+- ✅ Implement middleware patterns for agent customization
 - ✅ Build multi-step, autonomous AI systems
 
 ---
@@ -50,6 +51,10 @@ They:
 - **Repeat** until they have the answer
 - **Respond** to the user
 
+<img src="images/manager-specialists-analogy.png" alt="Project Manager with Specialists vs AI Agent with Tools" width="800"/>
+
+*Both project managers and AI agents delegate tasks to specialists/tools, following the same iterative pattern.*
+
 ---
 
 ## 🤖 What Are Agents?
@@ -70,6 +75,10 @@ Agent: [Uses] get_weather(city="Paris")
 Agent: [Observes] "18°C, partly cloudy"
 Agent: [Responds] "It's currently 18°C and partly cloudy in Paris"
 ```
+
+<img src="images/llm-vs-agent.png" alt="Standard LLM vs Agent with Tools" width="800"/>
+
+*Agents with tools can access real-time data and take actions, while standard LLMs are limited to their training data.*
 
 ---
 
@@ -103,6 +112,10 @@ Final Answer: "25 * 17 equals 425, which is not a prime number
 because it's divisible by 5."
 ```
 
+<img src="images/react-pattern-flow.png" alt="ReAct Pattern Flow Diagram" width="800"/>
+
+*The ReAct pattern: Agents iteratively reason about what to do, act by using tools, observe results, and repeat until they have the answer.*
+
 ---
 
 ## 🚀 Building Agents with create_agent()
@@ -120,8 +133,25 @@ LangChain Python provides `create_agent()` from `langchain.agents` - a high-leve
 
 ### Example 1: Basic Agent with create_agent()
 
-**Code**: [`code/01_basic_agent.py`](./code/01_basic_agent.py)  
-**Run**: `python 05-agents/code/01_basic_agent.py`
+Let's see how to use `create_agent()` to create an autonomous agent that handles the ReAct loop (Thought → Action → Observation) automatically.
+
+**Key code you'll work with:**
+```python
+# Create agent using create_agent() - that's it!
+agent = create_agent(
+    model,
+    tools=[calculator],  # Pass tools to the agent
+)
+
+# Use the agent with messages array
+response = agent.invoke({"messages": [HumanMessage(content=query)]})
+
+# Get the final answer from the last message
+last_message = response["messages"][-1]
+```
+
+**Code**: [`code/01_create_agent_basic.py`](./code/01_create_agent_basic.py)  
+**Run**: `python 05-agents/code/01_create_agent_basic.py`
 
 **Example code:**
 
@@ -167,6 +197,10 @@ if __name__ == "__main__":
     main()
 ```
 
+> **🤖 Try with [GitHub Copilot](../docs/copilot.md) Chat:** Want to explore this code further? Open this file in your editor and ask Copilot:
+> - "What does create_agent() do under the hood?"
+> - "How does create_agent() handle iteration limits and prevent infinite loops?"
+
 ### Expected Output
 
 ```
@@ -194,10 +228,26 @@ if __name__ == "__main__":
 
 ### Example 2: create_agent() with Multiple Tools
 
-Let's give an agent multiple tools and observe how it autonomously selects the right one.
+Let's see how to give an agent multiple tools using `tools=[tool1, tool2, tool3]` and observe how it autonomously selects the right one.
 
-**Code**: [`code/02_multi_tool_agent.py`](./code/02_multi_tool_agent.py)  
-**Run**: `python 05-agents/code/02_multi_tool_agent.py`
+**Key code you'll work with:**
+```python
+# Create agent with all three tools - agent auto-selects the right one
+agent = create_agent(
+    model,
+    tools=[calculator, get_weather, search],  # Multiple tools!
+)
+
+# Agent automatically picks the correct tool for each query
+queries = [
+    "What is 50 * 25?",              # → Uses calculator
+    "What's the weather in Tokyo?",  # → Uses get_weather
+    "Tell me about LangChain",       # → Uses search
+]
+```
+
+**Code**: [`code/02_create_agent_multi_tool.py`](./code/02_create_agent_multi_tool.py)  
+**Run**: `python 05-agents/code/02_create_agent_multi_tool.py`
 
 **Example code:**
 
@@ -277,6 +327,26 @@ language models (LLMs).
    • Search tool for LangChain information
    • All with the same agent instance!
 ```
+
+### How It Works
+
+**What's happening**:
+1. **Agent receives query**: "What is 50 * 25?"
+2. **Reads tool descriptions**: Reviews all available tools
+3. **Selects best match**: Calculator tool (description mentions "mathematical calculations")
+4. **Executes tool**: Runs calculator with the expression
+5. **Returns natural response**: Formats the result in natural language
+
+**Tool Selection Logic**:
+- The agent uses tool **names** and **descriptions** to match queries to tools
+- More specific descriptions → Better tool selection
+- The LLM decides which tool fits best based on semantic meaning
+- You can give your agent multiple tools, and it will intelligently pick the right one for each task
+
+> **🤖 Try with [GitHub Copilot](../docs/copilot.md) Chat:** Want to explore this code further?
+> Open this file in your editor and ask Copilot:
+> - "How does the agent decide which tool to use?"
+> - "How can I add error handling if a tool fails?"
 
 ---
 
@@ -395,6 +465,188 @@ No more tool calls - Final answer ready
 because it is divisible by 5.
 ```
 
+> **🤖 Try with [GitHub Copilot](../docs/copilot.md) Chat:** Want to explore this code further?
+> Open this file in your editor and ask Copilot:
+> - "Walk me through what happens in each iteration of this loop"
+> - "How does the agent know when to stop calling tools?"
+
+---
+
+## 🔧 Additional Agent Patterns
+
+Now that you understand how to build basic agents with single and multiple tools, let's explore an additional pattern for production applications: **middleware**. Middleware lets you add behavior like logging, error handling, and dynamic model selection without modifying your tools or agent core logic.
+
+### Example 4: create_agent() with Middleware
+
+This example shows how to use **middleware** with `create_agent()` for production scenarios like dynamic model selection based on conversation complexity and graceful error handling.
+
+**Key code you'll work with:**
+```python
+# Middleware intercepts agent behavior without changing tools
+class DynamicModelMiddleware(AgentMiddleware):
+    def wrap_model_call(self, request, handler):
+        if len(request.state["messages"]) > 10:
+            # Switch to more capable model for complex conversations
+            return handler(request.override(model=advanced_model))
+        return handler(request)
+
+# Create agent with middleware - adds behavior like logging & error handling
+agent = create_agent(
+    model,
+    tools=[calculator, search],
+    middleware=[DynamicModelMiddleware(), ToolErrorMiddleware()],  # Plugin-style behavior!
+)
+```
+
+**Code**: [`code/04_agent_with_middleware.py`](./code/04_agent_with_middleware.py)  
+**Run**: `python 05-agents/code/04_agent_with_middleware.py`
+
+**Example code:**
+
+**What is middleware?** Middleware intercepts and modifies agent behavior without changing your tools or agent logic. Think of it as "plugins" for your agent.
+
+```python
+from langchain.agents import create_agent
+from langchain.agents.middleware import AgentMiddleware, ModelRequest
+from langchain.agents.middleware.types import ModelResponse
+from langchain_core.messages import ToolMessage
+from typing import Callable, Any
+
+# Middleware 1: Dynamic Model Selection
+# Switches to a more capable (and expensive) model for complex conversations
+class DynamicModelMiddleware(AgentMiddleware):
+    def __init__(self, messages_threshold: int = 10):
+        super().__init__()
+        self.messages_threshold = messages_threshold
+
+    def wrap_model_call(
+        self,
+        request: ModelRequest,
+        handler: Callable[[ModelRequest], ModelResponse],
+    ) -> ModelResponse:
+        message_count = len(request.state["messages"])
+        print(f"  [Middleware] Message count: {message_count}")
+        
+        # Option for complex conversations (>threshold messages)
+        if message_count > self.messages_threshold:
+            print("  [Middleware] Switching to more capable model")
+            # return handler(request.override(model=advanced_model))
+        
+        return handler(request)
+
+
+# Middleware 2: Custom Error Handling
+# Catches tool failures and provides helpful fallback messages
+class ToolErrorMiddleware(AgentMiddleware):
+    def wrap_tool_call(
+        self,
+        request: Any,
+        handler: Callable[[Any], ToolMessage],
+    ) -> ToolMessage:
+        try:
+            return handler(request)
+        except Exception as e:
+            tool_name = request.tool_call.get("name", "unknown")
+            print(f"  [Middleware] Tool '{tool_name}' failed: {e}")
+            # Return graceful fallback instead of crashing
+            return ToolMessage(
+                content=f"I encountered an error: {e}. Let me try a different approach.",
+                tool_call_id=request.tool_call.get("id", ""),
+            )
+
+
+# Create agent with both middleware
+agent = create_agent(
+    model,
+    tools=[calculator, search],
+    middleware=[DynamicModelMiddleware(), ToolErrorMiddleware()]
+)
+```
+
+> **🤖 Try with [GitHub Copilot](../docs/copilot.md) Chat:** Want to explore this code further? Open this file in your editor and ask Copilot:
+> - "How would I add request logging middleware?"
+> - "Can middleware modify tool arguments before execution?"
+
+### Expected Output
+
+When you run `python 05-agents/code/04_agent_with_middleware.py`:
+
+```
+🔧 Agent with Middleware Example
+
+Test 1: Simple calculation
+────────────────────────────────────────────────────────────
+👤 User: What is 25 * 8?
+
+  [Middleware] Message count: 1
+  [Middleware] ✓ Using current model
+
+🤖 Agent: 25 multiplied by 8 equals 200.
+
+
+Test 2: Search with error handling
+────────────────────────────────────────────────────────────
+👤 User: Search for information about error handling
+
+  [Middleware] Message count: 1
+  [Middleware] ✓ Using current model
+  [Middleware] ⚠️  Tool "search" failed: Search service temporarily unavailable
+  [Middleware] 🔄 Returning fallback message
+
+🤖 Agent: I encountered an error while using the search tool. Let me try
+a different approach to answer your question about error handling.
+
+💡 Middleware Benefits:
+   • Dynamic model selection → Cost optimization
+   • Error handling → Graceful degradation
+   • Logging → Easy debugging
+   • Flexibility → Customize behavior without changing tools
+
+✅ Production Use Cases:
+   • Switch to cheaper models for simple queries
+   • Automatic retries with exponential backoff
+   • Request/response logging for monitoring
+   • User context injection (auth, permissions)
+   • Rate limiting and quota management
+```
+
+### How Middleware Works
+
+**Middleware Flow**:
+```mermaid
+flowchart TD
+    A[User Query] --> B[Middleware: Dynamic Model Selection]
+    B -->|Chooses right model| C[Agent Decision: which tool?]
+    C --> D[Middleware: Error Handler]
+    D -->|Wraps tool execution| E[Tool Execution]
+    E -->|May fail here| F[Middleware: Error Handler]
+    F -->|Catches errors, returns fallback| G[Agent Response]
+```
+
+**Two Middleware Types**:
+
+1. **wrap_model_call** - Intercepts calls TO the model
+   - Dynamic model selection based on conversation length
+   - Request logging and monitoring
+   - Context injection (user permissions, session data)
+
+2. **wrap_tool_call** - Intercepts tool executions
+   - Error handling and retries
+   - Tool result transformation
+   - Permission checks before tool execution
+
+**Production Benefits**:
+- ✅ **Cost Optimization**: Use cheap models for simple tasks, expensive for complex
+- ✅ **Resilience**: Graceful error handling prevents agent crashes
+- ✅ **Observability**: Log all requests for debugging and monitoring
+- ✅ **Flexibility**: Add behavior without modifying tools or agent core logic
+
+**When to use middleware**:
+- Production agents that need reliability
+- Multi-tenant applications (different users, different permissions)
+- Cost-sensitive applications
+- Systems requiring audit logs
+
 ---
 
 ## 🔧 Tool Selection Logic
@@ -413,16 +665,148 @@ The agent uses tool **names** and **descriptions** to match queries to tools:
 3. Document **parameters** - use docstrings with Args sections
 4. Be **specific** - more detail helps the LLM choose correctly
 
+<img src="images/tool-selection-logic.png" alt="Agent Tool Selection Process" width="800"/>
+
+*Agents intelligently select the right tool based on semantic matching between the query and tool descriptions.*
+
 ---
 
 ## 🎓 Key Takeaways
 
-- **Agents combine LLMs with tools** for autonomous problem-solving
-- **ReAct pattern**: Reason → Act → Observe → Repeat
-- **create_agent()** handles the loop automatically
-- **Tool descriptions** guide the agent's tool selection
-- **Multiple tools** let agents handle diverse tasks
-- **Iteration limits** prevent infinite loops
+- **Agents make autonomous decisions** - They choose which tools to use and when
+- **ReAct pattern is the core**: Reason → Act → Observe → Repeat until solved
+- **create_agent() is production-ready** - Handles the ReAct loop automatically with built-in error handling
+- **Tool descriptions matter** - Clear descriptions help agents pick the right tool
+- **Middleware adds flexibility** - Plugin-style behavior for logging, error handling, dynamic model selection
+- **Start simple, scale up** - Begin with basic agents, add middleware for production needs
+
+---
+
+## 🗺️ Concept Map
+
+This chapter taught you how agents use the ReAct pattern for autonomous reasoning:
+
+```mermaid
+graph TD
+    A[User Query] --> B[Thought]
+    B --> C{Need Tool?}
+    C -->|Yes| D[Action]
+    D --> E[Observation]
+    E --> B
+    C -->|No| F[Answer]
+```
+
+*Agents iterate (Think → Act → Observe) until they solve the problem.*
+
+---
+
+## 🏆 Assignment
+
+Ready to practice? Complete the challenges in [assignment.md](./assignment.md)!
+
+The assignment includes:
+1. **Research Agent with ReAct Loop** - Build an agent from scratch that uses the ReAct pattern to answer questions
+2. **Multi-Step Planning Agent** (Bonus) - Build an agent with multiple specialized tools that requires multi-step reasoning
+
+---
+
+## 📚 Additional Resources
+
+- [LangChain Agents Documentation](https://docs.langchain.com/oss/python/langchain/agents)
+- [LangChain Middleware Guide](https://docs.langchain.com/oss/python/langchain/middleware/custom) - Custom middleware patterns
+- [ReAct Paper](https://arxiv.org/abs/2210.03629) - Original research on Reasoning + Acting pattern
+- [LangChain create_agent() API](https://docs.langchain.com/oss/python/releases/langchain-v1) - Official API reference
+
+**💡 Want to see manual agent implementations?** Check out the [`samples/`](./samples/) folder for:
+- **Manual ReAct loop examples** - See how agents work under the hood without `create_agent()`
+- **Step-by-step agent patterns** - Custom loop logic and detailed debugging
+- These are great for understanding fundamentals before using `create_agent()`
+
+---
+
+## 🚀 What's Next?
+
+Great work! You've learned how to build **autonomous AI agents** that use the ReAct pattern to reason about problems and decide which tools to use—without hardcoded logic or manual control flow.
+
+### Building on Agents
+
+**Your agents can choose and use tools, but where do those tools come from?** 
+
+Next, you'll connect agents to external services via the Model Context Protocol (MCP), create retrieval tools from documents using embeddings and semantic search, and finally build systems where agents intelligently search your knowledge base in agentic RAG systems.
+
+### Project Ideas (So Far)
+
+With what you've learned, you can build:
+- 🧮 **Smart calculator** - Agent that knows when to use math vs search tools
+- 🌤️ **Weather assistant** - Agent that coordinates multiple data sources
+- 📋 **Task coordinator** - Agent that manages multiple tools for complex workflows
+- 🔍 **Research helper** - Agent that combines calculation, search, and analysis tools
+
+After completing the remaining chapters, you'll add external service integration (MCP) and document search capabilities!
+
+---
+
+## 🐛 Troubleshooting
+
+Common issues you might encounter when building agents:
+
+### "Agent loops forever or hits max iterations"
+
+**Cause**: Agent doesn't have a stopping condition or tools don't return useful results
+
+**Fixes**:
+1. Check your stopping condition:
+```python
+if not response.tool_calls or len(response.tool_calls) == 0:
+    # Agent has finished - no more tools needed
+    break
+```
+
+2. Lower `max_iterations` to fail fast during development:
+```python
+max_iterations = 3  # Start small, increase if needed
+```
+
+3. Ensure tools return meaningful results - vague outputs confuse the agent
+
+### "Tool not found" error
+
+**Cause**: Tool name mismatch between what LLM generates and what you defined
+
+**Fix**: Verify the tool name exactly matches:
+```python
+@tool
+def calculator(expression: str) -> str:  # Name must match exactly
+    """Perform mathematical calculations."""
+    # ...
+```
+
+### Agent makes wrong tool choices
+
+**Cause**: Tool descriptions aren't clear enough
+
+**Fix**: Improve tool descriptions with specific use cases:
+```python
+# ❌ Vague
+"""Does calculations"""
+
+# ✅ Clear
+"""Perform mathematical calculations like addition, multiplication, percentages. 
+Use this when you need to compute numbers."""
+```
+
+### Agent gets stuck repeating the same tool
+
+**Cause**: Tool doesn't provide enough information for agent to progress
+
+**Fix**: Ensure tool results are descriptive:
+```python
+# ❌ Not helpful
+return "42"
+
+# ✅ Descriptive
+return "The calculation result is 42. This is the answer to 6 * 7."
+```
 
 ---
 
@@ -438,10 +822,16 @@ pip install langchain langchain-openai python-dotenv
 
 ## 🗺️ Navigation
 
-[← Previous: Function Calling & Tools](../04-function-calling-tools/README.md) | [Back to Main](../README.md) | [Next: MCP Client →](../06-mcp-client/README.md)
+[← Previous: Function Calling & Tools](../04-function-calling-tools/README.md) | [Back to Main](../README.md) | [Next: Model Context Protocol (MCP) →](../06-mcp/README.md)
 
 ---
 
-## 💬 Questions?
+## 💬 Questions or stuck?
 
-[![Microsoft Foundry Discord](https://img.shields.io/badge/Discord-Azure_AI_Foundry_Community_Discord-blue?style=for-the-badge&logo=discord&color=5865f2&logoColor=fff)](https://aka.ms/foundry/discord)
+If you get stuck or have any questions about building AI apps, join:
+
+[![Microsoft Foundry Discord](https://img.shields.io/badge/Discord-Microsoft_Foundry_Community_Discord-blue?style=for-the-badge&logo=discord&color=5865f2&logoColor=fff)](https://aka.ms/foundry/discord)
+
+If you have product feedback or errors while building visit:
+
+[![Microsoft Foundry Developer Forum](https://img.shields.io/badge/GitHub-Microsoft_Foundry_Developer_Forum-blue?style=for-the-badge&logo=github&color=000000&logoColor=fff)](https://aka.ms/foundry/forum)

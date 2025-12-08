@@ -15,14 +15,14 @@ Practice building autonomous AI agents using the ReAct pattern, implementing age
 
 ## Challenge: Research Agent 🔍
 
-**Goal**: Build an agent using `create_react_agent()` that answers questions requiring web search and calculations.
+**Goal**: Build an agent using `create_agent()` that answers questions requiring web search and calculations.
 
 **Tasks**:
 1. Create `research_agent.py` in the `05-agents/solution/` folder
 2. Create two tools:
    - **Search Tool**: Simulates web search (return pre-defined results for common queries)
    - **Calculator Tool**: Performs mathematical calculations
-3. Build an agent using `create_react_agent()` with both tools
+3. Build an agent using `create_agent()` with both tools
 4. Test with queries that require multiple steps
 5. Display clear output showing which tools the agent used
 
@@ -37,7 +37,7 @@ Practice building autonomous AI agents using the ReAct pattern, implementing age
   - Step 3: Provide answer
 
 **Success Criteria**:
-- Agent uses `create_react_agent()` (the recommended LangGraph approach)
+- Agent uses `create_agent()` (the recommended LangChain approach)
 - Both tools are properly defined with clear descriptions
 - Agent autonomously decides which tool to use for each query
 - Agent correctly handles multi-step queries that require using both tools
@@ -49,10 +49,10 @@ Practice building autonomous AI agents using the ReAct pattern, implementing age
 # 1. Import required modules
 import os
 from dotenv import load_dotenv
+from langchain.agents import create_agent
 from langchain_core.messages import AIMessage, HumanMessage
 from langchain_core.tools import tool
 from langchain_openai import ChatOpenAI
-from langgraph.prebuilt import create_react_agent
 from pydantic import BaseModel, Field
 
 # 2. Define your search tool using @tool decorator:
@@ -85,8 +85,8 @@ from pydantic import BaseModel, Field
 
 # 4. Create the ChatOpenAI model with your environment variables
 
-# 5. Create agent using create_react_agent():
-#    agent = create_react_agent(model, tools=[search_tool, calculator_tool])
+# 5. Create agent using create_agent():
+#    agent = create_agent(model, tools=[search_tool, calculator_tool])
 
 # 6. Test with multi-step queries in a loop:
 #    queries = ["What is the population of Tokyo multiplied by 2?", ...]
@@ -112,7 +112,7 @@ from pydantic import BaseModel, Field
 
 **Hints**:
 - Follow the pattern from Examples 1 and 2 in the chapter
-- Use create_react_agent() - it handles the ReAct loop automatically
+- Use create_agent() - it handles the ReAct loop automatically
 - Focus on creating well-described tools so the agent knows when to use them
 - The agent will iterate through tools until it has enough information to answer
 
@@ -123,7 +123,7 @@ from pydantic import BaseModel, Field
 
 ## Bonus Challenge: Multi-Step Planning Agent 🎯
 
-**Goal**: Build an agent with multiple specialized tools using `create_react_agent()` that requires multi-step reasoning to solve complex queries.
+**Goal**: Build an agent with multiple specialized tools using `create_agent()` that requires multi-step reasoning to solve complex queries.
 
 **Tasks**:
 1. Create `planning_agent.py`
@@ -132,7 +132,7 @@ from pydantic import BaseModel, Field
    - **Calculator Tool**: Perform calculations
    - **Unit Converter Tool**: Convert between units (miles/km, USD/EUR, etc.)
    - **Comparison Tool**: Compare two values and determine which is larger/smaller
-3. Create agent using `create_react_agent()` with all four tools
+3. Create agent using `create_agent()` with all four tools
 4. Add helpful console output showing:
    - Which tools were used
    - Summary at the end showing total tool calls
@@ -154,7 +154,7 @@ from pydantic import BaseModel, Field
 
 **Success Criteria**:
 - All four tools are properly defined with clear descriptions
-- Agent uses `create_react_agent()` to handle multi-tool selection
+- Agent uses `create_agent()` to handle multi-tool selection
 - Agent autonomously uses multiple tools in sequence
 - Handles queries requiring 3+ tool calls
 - Clear output shows which tools were used
@@ -166,10 +166,10 @@ from pydantic import BaseModel, Field
 import os
 from typing import Literal
 from dotenv import load_dotenv
+from langchain.agents import create_agent
 from langchain_core.messages import AIMessage, HumanMessage
 from langchain_core.tools import tool
 from langchain_openai import ChatOpenAI
-from langgraph.prebuilt import create_react_agent
 from pydantic import BaseModel, Field
 
 # 2. Define your four specialized tools:
@@ -197,7 +197,7 @@ from pydantic import BaseModel, Field
 
 # 3. Create the ChatOpenAI model
 
-# 4. Create agent using create_react_agent():
+# 4. Create agent using create_agent():
 #    Pass model and all four tools
 
 # 5. Test with complex queries in a loop and display results
@@ -249,7 +249,7 @@ Solutions for all challenges are available in the [`solution/`](./solution/) fol
 
 ## Need Help?
 
-- **create_react_agent() basics**: Review Example 1 in [`code/01_create_agent_basic.py`](./code/01_create_agent_basic.py)
+- **create_agent() basics**: Review Example 1 in [`code/01_create_agent_basic.py`](./code/01_create_agent_basic.py)
 - **Multi-tool agents**: Check Example 2 in [`code/02_create_agent_multi_tool.py`](./code/02_create_agent_multi_tool.py)
 - **ReAct pattern**: Re-read the [ReAct section](./README.md#🧠-the-react-pattern) in the README
 - **Manual agent loops**: Check the [`samples/`](./samples/) folder for manual loop implementations

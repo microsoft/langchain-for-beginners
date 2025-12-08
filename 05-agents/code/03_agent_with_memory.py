@@ -1,7 +1,7 @@
 """
 Example 3: Agent with Checkpointer for Memory
 
-This example demonstrates using LangGraph's checkpointer for agent memory.
+This example demonstrates using LangChain's checkpointer for agent memory.
 The checkpointer allows the agent to maintain state across multiple invocations.
 
 Use checkpointers for:
@@ -10,16 +10,21 @@ Use checkpointers for:
 - Persisting agent state between calls
 
 Run: python 05-agents/code/03_agent_with_memory.py
+
+🤖 Try asking GitHub Copilot Chat (https://github.com/features/copilot):
+- "How does the checkpointer maintain conversation state?"
+- "What's the difference between MemorySaver and other checkpointers?"
+- "How can I persist agent memory to a database?"
 """
 
 import os
 
 from dotenv import load_dotenv
+from langchain.agents import create_agent
 from langchain_core.messages import HumanMessage
 from langchain_core.tools import tool
 from langchain_openai import ChatOpenAI
 from langgraph.checkpoint.memory import MemorySaver
-from langgraph.prebuilt import create_react_agent
 from pydantic import BaseModel, Field
 
 # Load environment variables
@@ -62,13 +67,17 @@ def main():
     print("🔧 Agent with Memory (Checkpointer) Example\n")
 
     # Create the model
-    model = ChatOpenAI(model=os.environ.get("AI_MODEL", "gpt-5-mini"))
+    model = ChatOpenAI(
+        model=os.getenv("AI_MODEL"),
+        base_url=os.getenv("AI_ENDPOINT"),
+        api_key=os.getenv("AI_API_KEY"),
+    )
 
     # Create a memory saver for conversation persistence
     memory = MemorySaver()
 
     # Create agent with checkpointer for memory
-    agent = create_react_agent(
+    agent = create_agent(
         model,
         tools=[calculator, search],
         checkpointer=memory,

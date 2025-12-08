@@ -8,10 +8,10 @@ import os
 from typing import Literal
 
 from dotenv import load_dotenv
+from langchain.agents import create_agent
 from langchain_core.messages import AIMessage, HumanMessage
 from langchain_core.tools import tool
 from langchain_openai import ChatOpenAI
-from langgraph.prebuilt import create_react_agent
 from pydantic import BaseModel, Field
 
 # Load environment variables
@@ -68,12 +68,8 @@ class UnitConverterInput(BaseModel):
     """Input for unit converter."""
 
     value: float = Field(description="The numeric value to convert")
-    from_unit: str = Field(
-        alias="from", description="Source unit, e.g., 'km', 'miles', 'USD'"
-    )
-    to_unit: str = Field(
-        alias="to", description="Target unit, e.g., 'km', 'miles', 'EUR'"
-    )
+    from_unit: str = Field(description="Source unit, e.g., 'km', 'miles', 'USD'")
+    to_unit: str = Field(description="Target unit, e.g., 'km', 'miles', 'EUR'")
 
 
 @tool(args_schema=UnitConverterInput)
@@ -142,14 +138,18 @@ def comparison_tool(
 
 
 def main():
-    print("🎯 Multi-Step Planning Agent using create_react_agent()\n")
+    print("🎯 Multi-Step Planning Agent using create_agent()\n")
     print("=" * 80 + "\n")
 
     # Create the model
-    model = ChatOpenAI(model=os.environ.get("AI_MODEL", "gpt-5-mini"))
+    model = ChatOpenAI(
+        model=os.getenv("AI_MODEL"),
+        base_url=os.getenv("AI_ENDPOINT"),
+        api_key=os.getenv("AI_API_KEY"),
+    )
 
-    # Create agent using create_react_agent() - handles multi-tool selection automatically
-    agent = create_react_agent(
+    # Create agent using create_agent() - handles multi-tool selection automatically
+    agent = create_agent(
         model, tools=[search, calculator, unit_converter, comparison_tool]
     )
 
@@ -186,7 +186,7 @@ def main():
         print("\n" + "=" * 80 + "\n")
 
     print("💡 Key Concepts:")
-    print("   • create_react_agent() handles multi-step reasoning automatically")
+    print("   • create_agent() handles multi-step reasoning automatically")
     print("   • Agent chains multiple tools together")
     print("   • Each tool call builds on previous results")
     print("   • Clear descriptions help agent pick right tool")
