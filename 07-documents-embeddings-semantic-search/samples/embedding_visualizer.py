@@ -14,9 +14,19 @@ import math
 import os
 
 from dotenv import load_dotenv
-from langchain_openai import OpenAIEmbeddings
+from langchain_openai import AzureOpenAIEmbeddings
 
 load_dotenv()
+
+
+def get_embeddings_endpoint():
+    """Get the Azure OpenAI endpoint, removing /openai/v1 suffix if present."""
+    endpoint = os.getenv("AI_ENDPOINT", "")
+    if endpoint.endswith("/openai/v1"):
+        endpoint = endpoint.replace("/openai/v1", "")
+    elif endpoint.endswith("/openai/v1/"):
+        endpoint = endpoint.replace("/openai/v1/", "")
+    return endpoint
 
 
 def cosine_similarity(vec1: list[float], vec2: list[float]) -> float:
@@ -33,136 +43,107 @@ def simple_pca_2d(vectors: list[list[float]]) -> list[tuple[float, float]]:
     Note: This is a simplified demonstration, not true PCA.
     In practice, use sklearn.decomposition.PCA or UMAP.
     """
-    if not vectors:
-        return []
-
-    # Simple projection using first two "principal-like" dimensions
-    # Just for demonstration - real PCA would compute eigenvectors
-    n_dims = min(len(vectors[0]), 2)
-    return [(v[0], v[1] if n_dims > 1 else 0) for v in vectors]
+    # Use first two principal components (simplified)
+    return [(v[0], v[1]) for v in vectors]
 
 
-def ascii_scatter_plot(
-    points: list[tuple[float, float]], labels: list[str], width: int = 60, height: int = 20
-) -> str:
-    """Create a simple ASCII scatter plot."""
-    if not points:
-        return "No data to plot"
+def print_similarity_matrix(texts: list[str], embeddings_list: list[list[float]]):
+    """Print a similarity matrix for the given texts."""
+    n = len(texts)
 
-    # Normalize to grid
-    xs = [p[0] for p in points]
-    ys = [p[1] for p in points]
+    # Print header
+    print("\n" + " " * 20, end="")
+    for i in range(n):
+        print(f"{i + 1:>8}", end="")
+    print()
 
-    x_min, x_max = min(xs), max(xs)
-    y_min, y_max = min(ys), max(ys)
-
-    x_range = x_max - x_min or 1
-    y_range = y_max - y_min or 1
-
-    # Create grid
-    grid = [[" " for _ in range(width)] for _ in range(height)]
-
-    # Place points
-    for i, (x, y) in enumerate(points):
-        col = int((x - x_min) / x_range * (width - 1))
-        row = int((1 - (y - y_min) / y_range) * (height - 1))  # Invert y
-        row = max(0, min(height - 1, row))
-        col = max(0, min(width - 1, col))
-        marker = str(i + 1) if i < 9 else "*"
-        grid[row][col] = marker
-
-    # Build plot
-    plot_lines = ["┌" + "─" * width + "┐"]
-    for row in grid:
-        plot_lines.append("│" + "".join(row) + "│")
-    plot_lines.append("└" + "─" * width + "┘")
-
-    return "\n".join(plot_lines)
+    # Print matrix
+    for i in range(n):
+        label = texts[i][:18].ljust(18)
+        print(f"{i + 1}. {label}", end=" ")
+        for j in range(n):
+            sim = cosine_similarity(embeddings_list[i], embeddings_list[j])
+            print(f"{sim:>8.3f}", end="")
+        print()
 
 
 def main():
     print("📊 Embedding Visualizer\n")
     print("=" * 80 + "\n")
 
-    embeddings = OpenAIEmbeddings(
-        model=os.getenv("AI_EMBEDDING_MODEL", "text-embedding-3-small"),
-        base_url=os.getenv("AI_ENDPOINT"),
+    embeddings = AzureOpenAIEmbeddings(
+        azure_endpoint=get_embeddings_endpoint(),
         api_key=os.getenv("AI_API_KEY"),
+        model=os.getenv("AI_EMBEDDING_MODEL", "text-embedding-ada-002"),
+        api_version="2024-02-01",
     )
 
     # Texts in semantic clusters
     texts = [
         # Cluster 1: Animals
-        "The cat sleeps on the couch",  # 1
-        "Dogs love to play fetch",  # 2
-        "Cats and dogs are popular pets",  # 3
+        "Dogs are loyal pets",
+        "Cats are independent",
+        "Hamsters are small",
         # Cluster 2: Programming
-        "Python is a programming language",  # 4
-        "JavaScript runs in browsers",  # 5
-        "Coding is fun and creative",  # 6
+        "Python is popular",
+        "JavaScript is versatile",
+        "Rust is fast",
         # Cluster 3: Food
-        "Pizza is my favorite food",  # 7
-        "I love eating sushi for dinner",  # 8
+        "Pizza is delicious",
+        "Sushi is healthy",
+        "Tacos are tasty",
     ]
 
-    print("📝 Texts to visualize:")
-    for i, text in enumerate(texts, 1):
-        print(f"   {i}. {text}")
-    print()
+    print("Creating embeddings for 9 texts across 3 categories...\n")
 
-    print("⏳ Generating embeddings...\n")
-    vectors = embeddings.embed_documents(texts)
-    print(f"✅ Generated {len(vectors)} embeddings of {len(vectors[0])} dimensions\n")
+    all_embeddings = embeddings.embed_documents(texts)
 
-    # Project to 2D
-    points_2d = simple_pca_2d(vectors)
-
-    print("=" * 80)
-    print("\n📈 2D Projection (ASCII Plot):\n")
-    plot = ascii_scatter_plot(points_2d, texts)
-    print(plot)
-    print()
-
-    print("Legend:")
-    for i, text in enumerate(texts, 1):
-        marker = str(i) if i <= 9 else "*"
-        print(f"   {marker} = {text[:40]}...")
-    print()
+    print("✅ Embeddings created!\n")
 
     # Show similarity matrix
-    print("=" * 80)
-    print("\n📊 Similarity Matrix:\n")
+    print("📊 Similarity Matrix:")
+    print("   (Higher values = more similar)\n")
 
-    # Print header
-    print("     ", end="")
-    for i in range(len(texts)):
-        print(f"  {i + 1}  ", end="")
-    print()
+    print_similarity_matrix(texts, all_embeddings)
 
-    for i, vec1 in enumerate(vectors):
-        print(f"  {i + 1}  ", end="")
-        for j, vec2 in enumerate(vectors):
-            sim = cosine_similarity(vec1, vec2)
-            # Color code: high similarity in bright
-            if sim > 0.9:
-                print(f" .██ ", end="")
-            elif sim > 0.7:
-                print(f" .▓▓ ", end="")
-            elif sim > 0.5:
-                print(f" .▒▒ ", end="")
-            else:
-                print(f" .░░ ", end="")
-        print()
+    # Show cluster analysis
+    print("\n" + "=" * 80 + "\n")
+    print("📈 Cluster Analysis:\n")
 
-    print()
-    print("   Legend: ██ > 0.9  ▓▓ > 0.7  ▒▒ > 0.5  ░░ < 0.5")
+    clusters = [
+        ("Animals", [0, 1, 2]),
+        ("Programming", [3, 4, 5]),
+        ("Food", [6, 7, 8]),
+    ]
+
+    for cluster_name, indices in clusters:
+        # Calculate average within-cluster similarity
+        similarities = []
+        for i in range(len(indices)):
+            for j in range(i + 1, len(indices)):
+                sim = cosine_similarity(all_embeddings[indices[i]], all_embeddings[indices[j]])
+                similarities.append(sim)
+
+        avg_sim = sum(similarities) / len(similarities) if similarities else 0
+        print(f"   {cluster_name}: avg within-cluster similarity = {avg_sim:.3f}")
+
+    # Cross-cluster comparison
+    print("\n   Cross-cluster similarities (should be lower):")
+    cross_pairs = [
+        ("Animals vs Programming", 0, 3),
+        ("Animals vs Food", 0, 6),
+        ("Programming vs Food", 3, 6),
+    ]
+
+    for name, i, j in cross_pairs:
+        sim = cosine_similarity(all_embeddings[i], all_embeddings[j])
+        print(f"   {name}: {sim:.3f}")
 
     print("\n" + "=" * 80)
-    print("\n💡 Visualization Insights:")
-    print("   • Semantically similar texts cluster together")
-    print("   • Animals (1-3), Programming (4-6), Food (7-8) form groups")
-    print("   • High similarity scores within clusters")
-    print("   • For real visualization, use matplotlib or plotly with UMAP/t-SNE")
+    print("\n💡 Key Insights:")
+    print("   - Items in the same category have higher similarity scores")
+    print("   - Cross-category similarities are lower")
+    print("   - Embeddings naturally cluster by semantic meaning")
 
 
 if __name__ == "__main__":

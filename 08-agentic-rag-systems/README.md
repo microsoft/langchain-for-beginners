@@ -2,7 +2,11 @@
 
 In this chapter, you'll learn to build **Agentic RAG** systems where AI agents intelligently decide when and how to search your documents to answer questions. Unlike traditional RAG that always searches regardless of need, agentic RAG gives your AI the autonomy to determine whether retrieval is necessary—answering directly when it has the knowledge, or searching your documents when additional context is needed.
 
-You'll combine everything you've learned to build intelligent question-answering systems that provide accurate, sourced answers from custom knowledge bases.
+You'll combine everything you've learned to build intelligent question-answering systems that provide accurate, sourced answers from custom knowledge bases. You'll continue using:
+
+- Tools from [Function Calling & Tools](../04-function-calling-tools/README.md)
+- Agents from [Getting Started with Agents](../05-agents/README.md)
+- Document retrieval from [Documents, Embeddings & Semantic Search](../07-documents-embeddings-semantic-search/README.md)
 
 ## Prerequisites
 
@@ -28,22 +32,34 @@ By the end of this chapter, you'll be able to:
 **Imagine three types of students taking an exam:**
 
 **Closed-Book Exam (Standard LLM)**:
+
 - ❌ Student relies only on memorized knowledge
 - ❌ Can't look up specific facts
 - ❌ May give wrong answers confidently
+- ❌ Knowledge cutoff (stops learning at training time)
 
 **Open-Book Exam with No Strategy (Traditional RAG)**:
+
 - ✅ Student can reference textbook during exam
 - ❌ Looks up the textbook for EVERY question, even "What is 2+2?"
 - ❌ Wastes time searching when they already know the answer
+- ✅ More accurate, can cite sources
+- ❌ Slower and more expensive due to unnecessary searches
 
 **Smart Open-Book Exam (Agentic RAG)**:
+
 - ✅ Student can reference textbook during exam
 - ✅ **Decides** when to look things up vs answering from knowledge
 - ✅ "What is 2+2?" → Answers directly (no search needed)
 - ✅ "What was our company's Q3 revenue?" → Searches documents
+- ✅ Fast for simple questions, thorough for complex ones
+- ✅ More accurate, can cite sources when needed
 
 **This is the power of Agentic RAG!** The agent makes intelligent decisions about when retrieval is necessary.
+
+<img src="images/smart-student-analogy.png" alt="Smart Student Analogy" width="800"/>
+
+*The Smart Student analogy: Closed-book relies only on memory, Traditional RAG searches everything, Agentic RAG intelligently decides when to search.*
 
 ---
 
@@ -52,24 +68,34 @@ By the end of this chapter, you'll be able to:
 ### The Key Difference
 
 **Traditional RAG**:
+
 ```
 User Question → ALWAYS Search → Retrieve Docs → Generate Answer
 ```
+
 Every question triggers a search, even if the agent already knows the answer.
 
 **Agentic RAG**:
+
 ```
 User Question → Agent Decides → [Search if needed] → Generate Answer
 ```
+
 The agent uses reasoning to determine whether retrieval is necessary.
+
+<img src="images/traditional-vs-agentic-rag.png" alt="Traditional RAG vs Agentic RAG Comparison" width="800"/>
+
+*Traditional RAG always searches, while Agentic RAG makes intelligent decisions about when searching is necessary.*
 
 ### Example: The Difference in Action
 
 **"What is 2 + 2?"**
+
 - Traditional RAG: Searches vector store, retrieves irrelevant docs, answers "4" (wasted search)
 - Agentic RAG: Answers immediately "4" (no search needed)
 
 **"What was our company's revenue in Q3 2024?"**
+
 - Traditional RAG: Searches vector store, retrieves financial docs, answers "$1.2M"
 - Agentic RAG: Searches documents, answers "$1.2M based on Q3 financial report"
 
@@ -81,95 +107,203 @@ The agent uses reasoning to determine whether retrieval is necessary.
 | **Speed** | Slow for simple questions | Fast for simple, thorough for complex |
 | **Cost** | Embedding + search cost on every query | Lower cost - searches only when necessary |
 | **Intelligence** | Rigid, predictable | Adaptive, makes decisions |
+| **Complexity** | Simple pipeline | Requires agent loop |
+
+### When to Use Each Approach
+
+**Use Traditional RAG when**:
+
+- Every question requires searching your documents
+- Example: "Search our legal database for cases about X"
+- You want predictable, simple behavior
+
+**Use Agentic RAG when**:
+
+- Questions mix general knowledge and custom data
+- Example: "What is the capital of France and what's our Paris office address?"
+  - Agent answers capital from general knowledge (Paris)
+  - Agent searches documents for office address
+- You want optimal performance and cost
+
+**For most applications, Agentic RAG is the better choice** because it combines flexibility with efficiency.
 
 ---
 
-## 🏗️ Building Agentic RAG
+## 🏗️ Agentic RAG Architecture
 
-### Example 1: Traditional RAG (Always-Search Pattern)
+<img src="images/agentic-rag-architecture.png" alt="Agentic RAG Architecture" width="800"/>
 
-First, let's see traditional RAG for comparison.
+*Agentic RAG Architecture: The agent decides whether to retrieve documents or answer directly, then generates a response with citations when needed.*
 
-**Code**: [`code/01_traditional_rag.py`](./code/01_traditional_rag.py)  
-**Run**: `python 08-agentic-rag-systems/code/01_traditional_rag.py`
+**Key Components**:
 
-**Example code:**
+1. **Agent**: Makes decisions about when to search
+2. **Retrieval Tool**: Searches the vector store when needed
+3. **Vector Store**: Contains your document embeddings
+4. **Intelligent Decision**: Agent decides search vs direct answer
+
+### When to Use RAG vs Prompt Engineering
+
+**Decision tree:**
+
+1. Fits easily in prompt? → **Prompt Engineering**
+2. Large knowledge base that doesn't fit? → **RAG**
+3. Updates frequently? → **RAG**
+4. Need source citations? → **RAG**
+
+<img src="images/rag-vs-prompt-engineering.png" alt="RAG vs Prompt Engineering Decision Tree" width="800"/>
+
+*Decision tree for choosing between Prompt Engineering (small, static data) and RAG (large, dynamic knowledge base with citations).*
+
+**Prompt Engineering**: Small data, static content (e.g., FAQ bot with 20 questions). Simple, fast, no infrastructure.
+
+**RAG**: Large knowledge base, frequent updates, need citations (e.g., customer support with 10,000 manuals). Scalable, up-to-date, provides source attribution.
+
+---
+
+## 💻 Building Your First RAG System
+
+Before we build a RAG system, let's make sure RAG is the right choice! Let's see the decision framework in action.
+
+### Example 1: Choosing the Right Approach (RAG vs Alternatives)
+
+This example demonstrates the decision framework we just learned, comparing Prompt Engineering and RAG side by side to understand when each approach makes sense.
+
+**Key code you'll work with:**
 
 ```python
-from langchain_openai import ChatOpenAI, OpenAIEmbeddings
-from langchain_community.vectorstores import FAISS
-from langchain_core.documents import Document
-from langchain.chains import create_retrieval_chain
-from langchain.chains.combine_documents import create_stuff_documents_chain
-from langchain_core.prompts import ChatPromptTemplate
-from dotenv import load_dotenv
-import os
+# Wrap vector store in a retrieval tool for the agent
+@tool
+def search_docs(query: str) -> str:
+    """Search company documentation for technical information..."""  # Agent reads this to decide when to call
+    results = vector_store.similarity_search(query, k=2)  # Search for top 2 matches
+    return "\n\n".join([f"[{doc.metadata['source']}]: {doc.page_content}" for doc in results])
 
-load_dotenv()
-
-# Create sample documents
-docs = [
-    Document(page_content="Our Q3 2024 revenue was $1.2 million", metadata={"source": "financials.txt"}),
-    Document(page_content="The API uses OAuth 2.0 authentication", metadata={"source": "api-docs.txt"}),
-    Document(page_content="Company headquarters is in Seattle, WA", metadata={"source": "about.txt"}),
-]
-
-# Create vector store
-embeddings = OpenAIEmbeddings()
-vector_store = FAISS.from_documents(docs, embeddings)
-retriever = vector_store.as_retriever(search_kwargs={"k": 2})
-
-# Create the RAG chain (ALWAYS searches)
-model = ChatOpenAI(model=os.getenv("AI_MODEL"))
-
-prompt = ChatPromptTemplate.from_template("""
-Answer the question based on the context:
-
-Context: {context}
-
-Question: {input}
-""")
-
-combine_docs_chain = create_stuff_documents_chain(model, prompt)
-rag_chain = create_retrieval_chain(retriever, combine_docs_chain)
-
-# This searches EVERY time, even for general knowledge
-queries = [
-    "What is 2 + 2?",           # No need to search!
-    "What was Q3 revenue?",     # Needs document search
-]
-
-for query in queries:
-    print(f"\n🔍 Query: {query}")
-    result = rag_chain.invoke({"input": query})
-    print(f"📄 Retrieved {len(result['context'])} documents")  # Always retrieves!
-    print(f"Answer: {result['answer']}")
+# Create agent with the retrieval tool - agent decides when to use it
+agent = create_agent(model, tools=[search_docs], system_prompt="...")
 ```
 
-**The Problem**: Traditional RAG searches for "What is 2 + 2?" when it doesn't need to!
+**Code**: [`code/01_when_to_use_rag.py`](./code/01_when_to_use_rag.py)  
+**Run**: `python 08-agentic-rag-systems/code/01_when_to_use_rag.py`
+
+This demo shows two real-world scenarios:
+
+1. **Scenario 1: Small FAQ Bot** → Uses **Prompt Engineering** (5 Q&As fit in prompt)
+2. **Scenario 2: Large Documentation Bot** → Uses **Agentic RAG** (1000s of docs, agent decides when to search)
+
+> **🤖 Try with [GitHub Copilot](../docs/copilot.md) Chat:** Want to explore this code further? Open this file in your editor and ask Copilot:
+> - "How does agent decision-making improve efficiency in agentic RAG?"
+> - "What factors should I consider when choosing between RAG and prompt engineering?"
 
 ---
 
-### Example 2: Agentic RAG (Smart Decision-Making)
+**You've learned about agentic RAG, but what exactly does "traditional RAG" look like?** Before building intelligent systems, let's see the traditional pattern—a simple approach that searches documents for every single query, even "What is 2+2?". This helps you understand the inefficiency that agents solve.
 
-Now let's build the intelligent version where the agent decides when to search.
+### Example 1a: Traditional RAG (Always-Search Pattern)
+
+Let's see traditional RAG that always searches, regardless of whether it's needed.
+
+**Key code you'll work with:**
+
+```python
+# Traditional RAG: Always retrieves, then generates (no agent decision!)
+def traditional_rag(question: str) -> str:
+    # Step 1: ALWAYS retrieve documents (even if not needed!)
+    retrieved_docs = vector_store.similarity_search(question, k=2)
+    context = "\n".join([doc.page_content for doc in retrieved_docs])
+    
+    # Step 2: Generate answer with context
+    messages = [
+        SystemMessage(content="Answer based on the provided context."),
+        HumanMessage(content=f"Context:\n{context}\n\nQuestion: {question}")
+    ]
+    return model.invoke(messages).content
+```
+
+**Code**: [`code/01a_traditional_rag.py`](./code/01a_traditional_rag.py)  
+**Run**: `python 08-agentic-rag-systems/code/01a_traditional_rag.py`
+
+**Traditional RAG Pattern**:
+
+1. User asks a question (ANY question)
+2. System ALWAYS searches the vector store
+3. System passes retrieved documents + question to LLM
+4. LLM generates answer based on retrieved context
+
+**The Problem**:
+
+```text
+Question: "What is the capital of France?"
+Traditional RAG: 🔍 Searching documents... (wastes time and API calls)
+Agent: I can answer this directly - it's Paris! (no search needed)
+```
+
+This example demonstrates:
+
+- Using a simple 2-step retrieve-then-generate pattern
+- How the system searches even for general knowledge questions
+- Comparing costs: traditional RAG vs agentic approach
+- When traditional RAG makes sense (queries always need document search)
+
+**Key Insight**: Traditional RAG is simple and predictable, but inefficient. It searches every time, even when answering "What is 2+2?". This wastes API calls, time, and money on unnecessary retrieval operations.
+
+---
+
+**Traditional RAG often wastes time searching for every question, even general knowledge ones.** How do you build a system that's smart enough to only search when needed—answering "What is 2+2?" directly but searching documents for "What was our Q3 revenue?" That's agentic RAG: wrap your vector store in a tool and let the agent decide when to use it.
+
+### Example 2: Agentic RAG with Retrieval Tool
+
+Let's see how to create a retrieval tool from a vector store using `@tool` and give it to `create_agent()` for intelligent decision-making.
+
+**Key code you'll work with:**
+
+```python
+# Create a retrieval tool that the agent can choose to use
+@tool
+def search_langchain_docs(query: str) -> str:
+    """Search LangChain documentation for specific information..."""  # Agent decides when to call based on this
+    results = vector_store.similarity_search(query, k=2)  # Semantic search
+    return "\n\n".join([f"[{doc.metadata['source']}]: {doc.page_content}" for doc in results])
+
+# Agent autonomously decides: general knowledge? Answer directly. Need docs? Use tool.
+agent = create_agent(model, tools=[search_langchain_docs], system_prompt="...")
+```
 
 **Code**: [`code/02_agentic_rag.py`](./code/02_agentic_rag.py)  
 **Run**: `python 08-agentic-rag-systems/code/02_agentic_rag.py`
 
 **Example code:**
 
+> **📝 Note**: The code snippet below is simplified for clarity. The actual code file includes more documents, tests multiple questions that show when the agent searches vs answers directly, and provides detailed console output showing the agent's decision-making process.
+
 ```python
-from langchain.agents import create_agent
-from langchain_openai import OpenAIEmbeddings
-from langchain_community.vectorstores import FAISS
-from langchain_core.documents import Document
-from langchain_core.tools import tool
-from langchain_core.messages import HumanMessage
-from dotenv import load_dotenv
 import os
+from dotenv import load_dotenv
+from langchain.agents import create_agent
+from langchain_core.documents import Document
+from langchain_core.messages import HumanMessage
+from langchain_core.tools import tool
+from langchain_core.vectorstores import InMemoryVectorStore
+from langchain_openai import AzureOpenAIEmbeddings, ChatOpenAI
 
 load_dotenv()
+
+
+def get_embeddings_endpoint():
+    """Get the Azure OpenAI endpoint, removing /openai/v1 suffix if present."""
+    endpoint = os.getenv("AI_ENDPOINT", "")
+    if endpoint.endswith("/openai/v1"):
+        endpoint = endpoint.replace("/openai/v1", "")
+    return endpoint
+
+
+# Create embeddings
+embeddings = AzureOpenAIEmbeddings(
+    azure_endpoint=get_embeddings_endpoint(),
+    api_key=os.getenv("AI_API_KEY"),
+    model=os.getenv("AI_EMBEDDING_MODEL", "text-embedding-ada-002"),
+    api_version="2024-02-01",
+)
 
 # Create sample documents
 docs = [
@@ -179,8 +313,7 @@ docs = [
 ]
 
 # Create vector store
-embeddings = OpenAIEmbeddings()
-vector_store = FAISS.from_documents(docs, embeddings)
+vector_store = InMemoryVectorStore.from_documents(docs, embeddings)
 
 # Create retrieval tool - agent decides when to use it!
 @tool
@@ -196,10 +329,15 @@ def search_company_docs(query: str) -> str:
     ])
 
 # Create agent with the retrieval tool
-agent = create_agent(
+model = ChatOpenAI(
     model=os.getenv("AI_MODEL"),
+    base_url=os.getenv("AI_ENDPOINT"),
+    api_key=os.getenv("AI_API_KEY"),
+)
+agent = create_agent(
+    model,
     tools=[search_company_docs],
-    system_prompt="You are a helpful assistant. Only search documents when you need specific company information.",
+    system_prompt="You are a helpful assistant with access to company documents. Use the search tool when you need specific company information. For general knowledge questions, answer directly.",
 )
 
 # Test: Agent decides when to search
@@ -213,24 +351,18 @@ queries = [
 for query in queries:
     print(f"\n🔍 Query: {query}")
     response = agent.invoke({"messages": [HumanMessage(content=query)]})
-    
-    # Check if agent used the search tool
-    tool_used = any(
-        hasattr(msg, 'tool_calls') and msg.tool_calls 
-        for msg in response["messages"]
-    )
-    
-    if tool_used:
-        print("📚 Agent searched documents")
-    else:
-        print("🧠 Agent answered from knowledge")
-    
     print(f"Answer: {response['messages'][-1].content}")
 ```
 
+> **🤖 Try with [GitHub Copilot](../docs/copilot.md) Chat:** Want to explore this code further? Open this file in your editor and ask Copilot:
+> - "How does the agent decide when to use the retrieval tool vs answering directly?"
+> - "How would I add metadata filtering to the retrieval tool?"
+
 ### Expected Output
 
-```
+When you run this example with `python 08-agentic-rag-systems/code/02_agentic_rag.py`, you'll see:
+
+```text
 🔍 Query: What is 2 + 2?
 🧠 Agent answered from knowledge
 Answer: 4
@@ -246,103 +378,6 @@ Answer: The capital of France is Paris.
 🔍 Query: Where is the company headquarters?
 📚 Agent searched documents
 Answer: Company headquarters is in Seattle, WA.
-```
-
----
-
-### Example 3: Complete Agentic RAG System
-
-**Code**: [`code/03_complete_rag.py`](./code/03_complete_rag.py)  
-**Run**: `python 08-agentic-rag-systems/code/03_complete_rag.py`
-
-**Example code:**
-
-```python
-from langchain.agents import create_agent
-from langchain_openai import OpenAIEmbeddings
-from langchain_community.vectorstores import FAISS
-from langchain_community.document_loaders import TextLoader
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_core.tools import tool
-from langchain_core.messages import HumanMessage
-from dotenv import load_dotenv
-import os
-
-load_dotenv()
-
-def build_rag_system(docs_path: str):
-    """Build a complete agentic RAG system."""
-    
-    # 1. Load documents
-    loader = TextLoader(docs_path)
-    raw_docs = loader.load()
-    
-    # 2. Split into chunks
-    splitter = RecursiveCharacterTextSplitter(
-        chunk_size=500,
-        chunk_overlap=100,
-    )
-    docs = splitter.split_documents(raw_docs)
-    print(f"Loaded {len(docs)} document chunks")
-    
-    # 3. Create vector store
-    embeddings = OpenAIEmbeddings()
-    vector_store = FAISS.from_documents(docs, embeddings)
-    
-    # 4. Create retrieval tool
-    @tool
-    def search_knowledge_base(query: str) -> str:
-        """Search the knowledge base for relevant information.
-        Use this when you need specific details from the documentation.
-        """
-        results = vector_store.similarity_search(query, k=3)
-        
-        if not results:
-            return "No relevant documents found."
-        
-        return "\n\n---\n\n".join([
-            f"Source: {doc.metadata.get('source', 'unknown')}\n"
-            f"Content: {doc.page_content}"
-            for doc in results
-        ])
-    
-    # 5. Create agent
-    agent = create_agent(
-        model=os.getenv("AI_MODEL"),
-        tools=[search_knowledge_base],
-        system_prompt="""You are a knowledgeable assistant with access to a document search tool.
-        
-Guidelines:
-- Answer general knowledge questions directly without searching
-- Use the search tool for specific information from documents
-- Always cite sources when using retrieved information
-- If you can't find relevant information, say so clearly
-""",
-    )
-    
-    return agent
-
-def main():
-    # Build the system
-    agent = build_rag_system("./data/knowledge_base.txt")
-    
-    # Interactive Q&A
-    print("\n🤖 Agentic RAG System Ready!")
-    print("Ask questions about your documents or general knowledge.\n")
-    
-    while True:
-        query = input("You: ").strip()
-        if query.lower() in ['quit', 'exit', 'q']:
-            break
-        
-        response = agent.invoke({
-            "messages": [HumanMessage(content=query)]
-        })
-        
-        print(f"\nAssistant: {response['messages'][-1].content}\n")
-
-if __name__ == "__main__":
-    main()
 ```
 
 ---
@@ -366,10 +401,10 @@ if __name__ == "__main__":
 
 ## 🎓 Key Takeaways
 
-- **Traditional RAG** always searches, even when unnecessary
+- **Traditional RAG** always searches, even when unnecessary (simple 2-step: retrieve → generate)
 - **Agentic RAG** lets the agent decide when to search
 - Create **retrieval tools** from vector stores using `@tool`
-- Use `create_agent()` to build intelligent decision-making
+- Use `create_agent()` from `langchain.agents` to build intelligent decision-making agents
 - **Cite sources** when using retrieved information
 - Choose **RAG vs Prompt Engineering** based on data size and update frequency
 
@@ -378,7 +413,7 @@ if __name__ == "__main__":
 ## 📦 Dependencies
 
 ```bash
-pip install langchain langchain-openai langchain-community faiss-cpu python-dotenv
+pip install langchain langchain-openai langchain-core langgraph python-dotenv
 ```
 
 ---

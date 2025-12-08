@@ -23,24 +23,33 @@ Problem: Searches even for "What is 2+2?" - wasting time and money!
 import os
 
 from dotenv import load_dotenv
-from langchain.chains import create_retrieval_chain
-from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain_core.documents import Document
-from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.vectorstores import InMemoryVectorStore
-from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+from langchain_openai import AzureOpenAIEmbeddings, ChatOpenAI
 
 load_dotenv()
+
+
+def get_embeddings_endpoint():
+    """Get the Azure OpenAI endpoint, removing /openai/v1 suffix if present."""
+    endpoint = os.getenv("AI_ENDPOINT", "")
+    if endpoint.endswith("/openai/v1"):
+        endpoint = endpoint.replace("/openai/v1", "")
+    elif endpoint.endswith("/openai/v1/"):
+        endpoint = endpoint.replace("/openai/v1/", "")
+    return endpoint
 
 
 def main():
     print("📖 Traditional RAG System Example\n")
     print("=" * 80 + "\n")
 
-    embeddings = OpenAIEmbeddings(
-        model=os.getenv("AI_EMBEDDING_MODEL", "text-embedding-3-small"),
-        base_url=os.getenv("AI_ENDPOINT"),
+    embeddings = AzureOpenAIEmbeddings(
+        azure_endpoint=get_embeddings_endpoint(),
         api_key=os.getenv("AI_API_KEY"),
+        model=os.getenv("AI_EMBEDDING_MODEL", "text-embedding-ada-002"),
+        api_version="2024-02-01",
     )
 
     model = ChatOpenAI(
@@ -71,24 +80,38 @@ def main():
 
     print(f"📚 Creating vector store with {len(docs)} documents...\n")
 
-    # Create vector store and retriever
+    # Create vector store
     vector_store = InMemoryVectorStore.from_documents(docs, embeddings)
-    retriever = vector_store.as_retriever(search_kwargs={"k": 2})
 
-    # Create RAG prompt
-    prompt = ChatPromptTemplate.from_template("""
-Answer the question based on the following context:
-
+    # Simple 2-step RAG function (no chains!)
+    def traditional_rag(question: str, k: int = 2) -> tuple[str, list[Document]]:
+        """
+        Traditional RAG: Always retrieves documents, then generates answer.
+        
+        Step 1: Retrieve relevant documents (ALWAYS runs)
+        Step 2: Generate answer using retrieved context
+        """
+        # Step 1: ALWAYS retrieve documents
+        retrieved_docs = vector_store.similarity_search(question, k=k)
+        
+        # Format context from retrieved documents
+        context = "\n\n".join([doc.page_content for doc in retrieved_docs])
+        
+        # Step 2: Generate answer with context
+        messages = [
+            SystemMessage(content="""You are a helpful assistant. Answer the question based on the provided context.
+If the question can be answered without the context, still try to reference it if relevant.
+If the context is not helpful, answer based on your general knowledge."""),
+            HumanMessage(content=f"""Context:
 {context}
 
-Question: {input}
+Question: {question}
 
-Answer: Provide a clear answer. If the question can be answered without the context, still try to reference it if relevant.
-""")
-
-    # Create traditional RAG chain - ALWAYS searches!
-    combine_docs_chain = create_stuff_documents_chain(model, prompt)
-    rag_chain = create_retrieval_chain(retriever, combine_docs_chain)
+Answer:""")
+        ]
+        
+        response = model.invoke(messages)
+        return response.content, retrieved_docs
 
     print("💡 Watch how traditional RAG searches for EVERY query:\n")
 
@@ -104,11 +127,11 @@ Answer: Provide a clear answer. If the question can be answered without the cont
         print(f"\n❓ Question: {question}\n")
 
         print("   🔍 Traditional RAG: ALWAYS searching documents...")
-        response = rag_chain.invoke({"input": question})
+        answer, retrieved_docs = traditional_rag(question)
 
-        print(f"🤖 Answer: {response['answer']}")
-        print(f"\n📄 Searched {len(response['context'])} documents (even if not needed)")
-        for i, doc in enumerate(response["context"]):
+        print(f"🤖 Answer: {answer}")
+        print(f"\n📄 Searched {len(retrieved_docs)} documents (even if not needed)")
+        for i, doc in enumerate(retrieved_docs):
             print(f"   {i + 1}. {doc.metadata['source']}")
         print()
 

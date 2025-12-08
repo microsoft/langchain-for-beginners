@@ -10,9 +10,20 @@ import os
 from dotenv import load_dotenv
 from langchain_core.documents import Document
 from langchain_core.vectorstores import InMemoryVectorStore
-from langchain_openai import OpenAIEmbeddings
+from langchain_openai import AzureOpenAIEmbeddings
 
 load_dotenv()
+
+
+def get_embeddings_endpoint():
+    """Get the Azure OpenAI endpoint, removing /openai/v1 suffix if present."""
+    endpoint = os.getenv("AI_ENDPOINT", "")
+    if endpoint.endswith("/openai/v1"):
+        endpoint = endpoint.replace("/openai/v1", "")
+    elif endpoint.endswith("/openai/v1/"):
+        endpoint = endpoint.replace("/openai/v1/", "")
+    return endpoint
+
 
 BOOKS = [
     {
@@ -54,10 +65,11 @@ def main():
     print("📚 Semantic Book Search\n")
     print("=" * 80 + "\n")
 
-    embeddings = OpenAIEmbeddings(
-        model=os.getenv("AI_EMBEDDING_MODEL", "text-embedding-3-small"),
-        base_url=os.getenv("AI_ENDPOINT"),
+    embeddings = AzureOpenAIEmbeddings(
+        azure_endpoint=get_embeddings_endpoint(),
         api_key=os.getenv("AI_API_KEY"),
+        model=os.getenv("AI_EMBEDDING_MODEL", "text-embedding-ada-002"),
+        api_version="2024-02-01",
     )
 
     print("📖 Loading books into vector store...\n")

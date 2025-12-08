@@ -16,24 +16,35 @@ agentic RAG gives your AI autonomy to determine whether retrieval is necessary.
 import os
 
 from dotenv import load_dotenv
+from langchain.agents import create_agent
 from langchain_core.documents import Document
 from langchain_core.messages import HumanMessage
 from langchain_core.tools import tool
 from langchain_core.vectorstores import InMemoryVectorStore
-from langchain_openai import ChatOpenAI, OpenAIEmbeddings
-from langgraph.prebuilt import create_react_agent
+from langchain_openai import AzureOpenAIEmbeddings, ChatOpenAI
 
 load_dotenv()
+
+
+def get_embeddings_endpoint():
+    """Get the Azure OpenAI endpoint, removing /openai/v1 suffix if present."""
+    endpoint = os.getenv("AI_ENDPOINT", "")
+    if endpoint.endswith("/openai/v1"):
+        endpoint = endpoint.replace("/openai/v1", "")
+    elif endpoint.endswith("/openai/v1/"):
+        endpoint = endpoint.replace("/openai/v1/", "")
+    return endpoint
 
 
 def main():
     print("🤖 Agentic RAG System Example\n")
 
     # 1. Setup embeddings and model
-    embeddings = OpenAIEmbeddings(
-        model=os.getenv("AI_EMBEDDING_MODEL", "text-embedding-3-small"),
-        base_url=os.getenv("AI_ENDPOINT"),
+    embeddings = AzureOpenAIEmbeddings(
+        azure_endpoint=get_embeddings_endpoint(),
         api_key=os.getenv("AI_API_KEY"),
+        model=os.getenv("AI_EMBEDDING_MODEL", "text-embedding-ada-002"),
+        api_version="2024-02-01",
     )
 
     model = ChatOpenAI(
@@ -81,7 +92,11 @@ def main():
 
     # 5. Create agent with retrieval tool
     # The agent will autonomously decide when to search vs answer directly
-    agent = create_react_agent(model, tools=[search_langchain_docs])
+    agent = create_agent(
+        model,
+        tools=[search_langchain_docs],
+        system_prompt="You are a helpful assistant with access to LangChain documentation. Use the search tool when you need specific information about LangChain, RAG, or vector stores. For general knowledge questions, answer directly without searching.",
+    )
 
     # 6. Ask different types of questions to see agent decision-making
     questions = [

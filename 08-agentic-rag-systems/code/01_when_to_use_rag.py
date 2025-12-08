@@ -15,15 +15,25 @@ Run: python 08-agentic-rag-systems/code/01_when_to_use_rag.py
 import os
 
 from dotenv import load_dotenv
+from langchain.agents import create_agent
 from langchain_core.documents import Document
 from langchain_core.messages import HumanMessage
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.tools import tool
 from langchain_core.vectorstores import InMemoryVectorStore
-from langchain_openai import ChatOpenAI, OpenAIEmbeddings
-from langgraph.prebuilt import create_react_agent
+from langchain_openai import AzureOpenAIEmbeddings, ChatOpenAI
 
 load_dotenv()
+
+
+def get_embeddings_endpoint():
+    """Get the Azure OpenAI endpoint, removing /openai/v1 suffix if present."""
+    endpoint = os.getenv("AI_ENDPOINT", "")
+    if endpoint.endswith("/openai/v1"):
+        endpoint = endpoint.replace("/openai/v1", "")
+    elif endpoint.endswith("/openai/v1/"):
+        endpoint = endpoint.replace("/openai/v1/", "")
+    return endpoint
 
 
 def main():
@@ -143,10 +153,11 @@ A: We accept all major credit cards, PayPal, and Apple Pay.
 
     print("Creating vector store from documents...")
 
-    embeddings = OpenAIEmbeddings(
-        model=os.getenv("AI_EMBEDDING_MODEL", "text-embedding-3-small"),
-        base_url=os.getenv("AI_ENDPOINT"),
+    embeddings = AzureOpenAIEmbeddings(
+        azure_endpoint=get_embeddings_endpoint(),
         api_key=os.getenv("AI_API_KEY"),
+        model=os.getenv("AI_EMBEDDING_MODEL", "text-embedding-ada-002"),
+        api_version="2024-02-01",
     )
 
     vector_store = InMemoryVectorStore.from_documents(docs, embeddings)
@@ -162,7 +173,11 @@ A: We accept all major credit cards, PayPal, and Apple Pay.
         )
 
     # Create agent with retrieval tool
-    agent = create_react_agent(model, tools=[search_docs])
+    agent = create_agent(
+        model,
+        tools=[search_docs],
+        system_prompt="You are a helpful technical documentation assistant. Search the docs when you need specific technical information.",
+    )
 
     rag_question = "How does API authentication work?"
     print(f'\nQuestion: "{rag_question}"\n')

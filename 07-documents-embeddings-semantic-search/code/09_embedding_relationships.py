@@ -15,9 +15,19 @@ import math
 import os
 
 from dotenv import load_dotenv
-from langchain_openai import OpenAIEmbeddings
+from langchain_openai import AzureOpenAIEmbeddings
 
 load_dotenv()
+
+
+def get_embeddings_endpoint():
+    """Get the Azure OpenAI endpoint, removing /openai/v1 suffix if present."""
+    endpoint = os.getenv("AI_ENDPOINT", "")
+    if endpoint.endswith("/openai/v1"):
+        endpoint = endpoint.replace("/openai/v1", "")
+    elif endpoint.endswith("/openai/v1/"):
+        endpoint = endpoint.replace("/openai/v1/", "")
+    return endpoint
 
 
 def cosine_similarity(vec_a: list[float], vec_b: list[float]) -> float:
@@ -44,11 +54,11 @@ def main():
     print("that can be manipulated mathematically.\n")
     print("=" * 70 + "\n")
 
-    # Initialize embeddings model
-    embeddings = OpenAIEmbeddings(
-        model=os.getenv("AI_EMBEDDING_MODEL", "text-embedding-3-small"),
-        base_url=os.getenv("AI_ENDPOINT"),
+    embeddings = AzureOpenAIEmbeddings(
+        azure_endpoint=get_embeddings_endpoint(),
         api_key=os.getenv("AI_API_KEY"),
+        model=os.getenv("AI_EMBEDDING_MODEL", "text-embedding-ada-002"),
+        api_version="2024-02-01",
     )
 
     # ============================================================================
@@ -68,117 +78,70 @@ def main():
 
     # Perform vector arithmetic: Puppy - Dog + Cat
     puppy_minus_dog = subtract_vectors(puppy_embed, dog_embed)
-    result1 = add_vectors(puppy_minus_dog, cat_embed)
+    result_vector = add_vectors(puppy_minus_dog, cat_embed)
 
-    # Calculate similarity with Kitten
-    similarity_to_kitten = cosine_similarity(result1, kitten_embed)
+    # Compare result with actual kitten embedding
+    similarity_to_kitten = cosine_similarity(result_vector, kitten_embed)
 
-    print(f"✅ Similarity to 'Kitten': {similarity_to_kitten * 100:.2f}%")
-    print("\nWhat this means:")
-    print("  • Puppy is to Dog as Kitten is to Cat")
-    print("  • The vectors encode 'species' and 'life stage' as separate dimensions")
-    print("  • Subtracting 'Dog' removes the adult dog, adding 'Cat' finds the young cat")
+    # Also compare with other options
+    similarity_to_cat = cosine_similarity(result_vector, cat_embed)
+    similarity_to_dog = cosine_similarity(result_vector, dog_embed)
+    similarity_to_puppy = cosine_similarity(result_vector, puppy_embed)
 
-    # Show comparison with unrelated animal
-    bird_embed = embeddings.embed_query("Bird")
-    similarity_to_bird = cosine_similarity(result1, bird_embed)
+    print("Results (higher = more similar):")
+    print(f"   Similarity to 'Kitten': {similarity_to_kitten:.4f} ← Expected winner!")
+    print(f"   Similarity to 'Cat':    {similarity_to_cat:.4f}")
+    print(f"   Similarity to 'Dog':    {similarity_to_dog:.4f}")
+    print(f"   Similarity to 'Puppy':  {similarity_to_puppy:.4f}")
 
-    print(f"\n📊 Comparison: Similarity to 'Bird': {similarity_to_bird * 100:.2f}%")
-    print("   (Lower than Kitten - Bird is a different species, not a young cat)\n")
-
-    print("=" * 70 + "\n")
-
-    # ============================================================================
-    # Example 2: Cultural Food Relationships
-    # Demonstrating: pizza - Italy + Japan ≈ sushi
-    # ============================================================================
-
-    print("🍕 Example 2: Cultural Food Relationships")
-    print("─" * 70)
-    print("\nTesting: Embedding('pizza') - Embedding('Italy') + Embedding('Japan')")
-    print("Expected result: Should be similar to Embedding('sushi')\n")
-
-    # Generate embeddings for food and countries
-    food_texts = ["pizza", "Italy", "Japan", "sushi"]
-    food_embeds = embeddings.embed_documents(food_texts)
-    pizza_embed, italy_embed, japan_embed, sushi_embed = food_embeds
-
-    # Perform vector arithmetic: pizza - Italy + Japan
-    pizza_minus_italy = subtract_vectors(pizza_embed, italy_embed)
-    result2 = add_vectors(pizza_minus_italy, japan_embed)
-
-    # Calculate similarity with sushi
-    similarity_to_sushi = cosine_similarity(result2, sushi_embed)
-
-    print(f"✅ Similarity to 'sushi': {similarity_to_sushi * 100:.2f}%")
-    print("\nWhat this means:")
-    print("  • Pizza is to Italy as sushi is to Japan")
-    print("  • The embeddings understand cultural food associations")
-    print("  • Subtracting 'Italy' removes the country, adding 'Japan' finds Japan's iconic food")
-
-    # Show comparison with unrelated food
-    burger_embed = embeddings.embed_query("hamburger")
-    similarity_to_burger = cosine_similarity(result2, burger_embed)
-
-    print(f"\n📊 Comparison: Similarity to 'hamburger': {similarity_to_burger * 100:.2f}%")
-    print("   (Lower than sushi, as expected - hamburger is more associated with USA)\n")
-
-    print("=" * 70 + "\n")
-
-    # ============================================================================
-    # Example 3: Synonym Clustering
-    # Demonstrating: Similar words have similar embeddings
-    # ============================================================================
-
-    print("😊 Example 3: Synonym Clustering")
-    print("─" * 70)
-    print("\nTesting similarity between synonyms:\n")
-
-    # Generate embeddings for synonyms
-    emotion_texts = ["happy", "joyful", "cheerful", "sad"]
-    emotion_embeds = embeddings.embed_documents(emotion_texts)
-    happy_embed, joyful_embed, cheerful_embed, sad_embed = emotion_embeds
-
-    # Calculate similarities
-    happy_joyful = cosine_similarity(happy_embed, joyful_embed)
-    happy_cheerful = cosine_similarity(happy_embed, cheerful_embed)
-    happy_sad = cosine_similarity(happy_embed, sad_embed)
-
-    print(f"Similarity: 'happy' ↔ 'joyful'   = {happy_joyful * 100:.2f}% ✅ (synonyms)")
-    print(f"Similarity: 'happy' ↔ 'cheerful' = {happy_cheerful * 100:.2f}% ✅ (synonyms)")
-    print(f"Similarity: 'happy' ↔ 'sad'      = {happy_sad * 100:.2f}% ❌ (opposites)")
-
-    print("\nWhat this means:")
-    print("  • Words with similar meanings have similar embeddings")
-    print("  • They cluster close together in vector space")
-    print("  • Opposite meanings have lower similarity scores")
+    if similarity_to_kitten > max(similarity_to_cat, similarity_to_dog, similarity_to_puppy):
+        print("\n✅ Success! The vector math correctly identified 'Kitten'!")
+    else:
+        print("\n⚠️  The result is close, but not the highest match to 'Kitten'")
 
     print("\n" + "=" * 70 + "\n")
 
     # ============================================================================
-    # Summary
+    # Example 2: Semantic Relationships
     # ============================================================================
 
-    print("🎓 Key Takeaways:")
-    print("─" * 70)
-    print("\n1. Embeddings capture semantic relationships:")
-    print("   • Puppy:Dog :: Kitten:Cat (animal life stages)")
-    print("   • pizza:Italy :: sushi:Japan (cultural foods)")
-    print("")
-    print("2. Vector arithmetic works on meanings:")
-    print("   • Adding/subtracting embeddings preserves relationships")
-    print("   • The math 'understands' concepts like species, life stage, country, food")
-    print("")
-    print("3. Synonyms cluster together:")
-    print("   • Similar meanings = nearby in vector space")
-    print("   • Different meanings = farther apart")
-    print("")
-    print("4. This enables powerful applications:")
-    print("   • Semantic search (find similar meanings, not just keywords)")
-    print("   • Analogy completion (A:B :: C:?)")
-    print("   • Document clustering (group by topic)")
-    print("   • Recommendation systems (find similar items)")
-    print("\n✅ These relationships emerge from training on massive text corpora!")
+    print("📚 Example 2: Semantic Similarity Clusters")
+    print("─" * 70 + "\n")
+
+    # Create semantic clusters
+    tech_texts = ["Python programming", "JavaScript coding", "Software development"]
+    animal_texts = ["Golden retriever dog", "Siamese cat", "Pet hamster"]
+    food_texts = ["Italian pizza", "Japanese sushi", "Mexican tacos"]
+
+    all_texts = tech_texts + animal_texts + food_texts
+    all_embeds = embeddings.embed_documents(all_texts)
+
+    print("Comparing items across categories:\n")
+
+    # Compare first item of each category
+    tech_animal = cosine_similarity(all_embeds[0], all_embeds[3])
+    tech_food = cosine_similarity(all_embeds[0], all_embeds[6])
+    animal_food = cosine_similarity(all_embeds[3], all_embeds[6])
+    tech_tech = cosine_similarity(all_embeds[0], all_embeds[1])
+    animal_animal = cosine_similarity(all_embeds[3], all_embeds[4])
+    food_food = cosine_similarity(all_embeds[6], all_embeds[7])
+
+    print("Within-category similarities (should be high):")
+    print(f"   'Python' vs 'JavaScript':      {tech_tech:.4f}")
+    print(f"   'Dog' vs 'Cat':                {animal_animal:.4f}")
+    print(f"   'Pizza' vs 'Sushi':            {food_food:.4f}")
+
+    print("\nCross-category similarities (should be lower):")
+    print(f"   'Python' vs 'Dog':             {tech_animal:.4f}")
+    print(f"   'Python' vs 'Pizza':           {tech_food:.4f}")
+    print(f"   'Dog' vs 'Pizza':              {animal_food:.4f}")
+
+    print("\n" + "=" * 70)
+    print("\n💡 Key Insights:")
+    print("   - Embeddings encode semantic relationships as vector dimensions")
+    print("   - Similar concepts cluster together in vector space")
+    print("   - Vector math can reveal analogies (Puppy:Dog :: Kitten:Cat)")
+    print("   - This enables powerful semantic reasoning in AI applications")
 
 
 if __name__ == "__main__":

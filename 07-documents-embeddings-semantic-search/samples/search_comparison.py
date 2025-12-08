@@ -12,9 +12,19 @@ import os
 from dotenv import load_dotenv
 from langchain_core.documents import Document
 from langchain_core.vectorstores import InMemoryVectorStore
-from langchain_openai import OpenAIEmbeddings
+from langchain_openai import AzureOpenAIEmbeddings
 
 load_dotenv()
+
+
+def get_embeddings_endpoint():
+    """Get the Azure OpenAI endpoint, removing /openai/v1 suffix if present."""
+    endpoint = os.getenv("AI_ENDPOINT", "")
+    if endpoint.endswith("/openai/v1"):
+        endpoint = endpoint.replace("/openai/v1", "")
+    elif endpoint.endswith("/openai/v1/"):
+        endpoint = endpoint.replace("/openai/v1/", "")
+    return endpoint
 
 
 def keyword_search(docs: list[Document], query: str) -> list[Document]:
@@ -34,70 +44,56 @@ def main():
 
     # Create sample documents
     docs = [
-        Document(
-            page_content="The quick brown fox jumps over the lazy dog.",
-            metadata={"id": 1},
-        ),
-        Document(
-            page_content="A speedy auburn canine leaps above the idle hound.",
-            metadata={"id": 2},
-        ),
-        Document(
-            page_content="Python is a popular programming language for AI.",
-            metadata={"id": 3},
-        ),
-        Document(
-            page_content="Machine learning models can classify images.",
-            metadata={"id": 4},
-        ),
-        Document(
-            page_content="Dogs are loyal and playful companions for families.",
-            metadata={"id": 5},
-        ),
+        Document(page_content="Python is great for machine learning and AI applications."),
+        Document(page_content="JavaScript powers interactive web experiences."),
+        Document(page_content="Data science involves statistical analysis and modeling."),
+        Document(page_content="Neural networks learn patterns from training examples."),
+        Document(page_content="Cats are independent pets that enjoy napping."),
+        Document(page_content="Dogs love outdoor activities and playing fetch."),
     ]
 
-    embeddings = OpenAIEmbeddings(
-        model=os.getenv("AI_EMBEDDING_MODEL", "text-embedding-3-small"),
-        base_url=os.getenv("AI_ENDPOINT"),
+    embeddings = AzureOpenAIEmbeddings(
+        azure_endpoint=get_embeddings_endpoint(),
         api_key=os.getenv("AI_API_KEY"),
+        model=os.getenv("AI_EMBEDDING_MODEL", "text-embedding-ada-002"),
+        api_version="2024-02-01",
     )
 
     vector_store = InMemoryVectorStore.from_documents(docs, embeddings)
 
     # Test queries
     queries = [
-        "fast fox jumping",
-        "coding languages",
-        "pet animals",
+        "artificial intelligence programming",  # Semantic: should find Python/ML
+        "deep learning models",  # Semantic: should find neural networks
+        "pets for apartments",  # Semantic: should find cats
+        "outdoor exercise",  # Semantic: should find dogs
     ]
 
     for query in queries:
         print(f'Query: "{query}"\n')
-        print("─" * 80)
 
         # Keyword search
         keyword_results = keyword_search(docs, query)
-        print(f"\n📝 Keyword Search Results: {len(keyword_results)} found")
+        print(f"📝 Keyword Search ({len(keyword_results)} results):")
         if keyword_results:
-            for doc in keyword_results:
-                print(f"   • {doc.page_content}")
+            for doc in keyword_results[:2]:
+                print(f"   - {doc.page_content[:60]}...")
         else:
-            print("   (No exact keyword matches)")
+            print("   No exact keyword matches found!")
 
         # Semantic search
         semantic_results = vector_store.similarity_search(query, k=2)
-        print(f"\n🧠 Semantic Search Results: {len(semantic_results)} found")
+        print(f"\n🧠 Semantic Search (top 2):")
         for doc in semantic_results:
-            print(f"   • {doc.page_content}")
+            print(f"   - {doc.page_content[:60]}...")
 
-        print("\n" + "=" * 80 + "\n")
+        print("\n" + "─" * 80 + "\n")
 
-    print("💡 Key Observation:")
-    print("   Semantic search finds documents with SIMILAR MEANING")
-    print("   even when exact keywords don't match!")
-    print("   - 'fast fox jumping' finds 'speedy auburn canine leaps'")
-    print("   - 'coding languages' finds 'programming language'")
-    print("   - 'pet animals' finds 'dogs' and 'loyal companions'")
+    print("=" * 80)
+    print("\n💡 Key Insights:")
+    print("   - Keyword search only finds exact word matches")
+    print("   - Semantic search understands meaning and context")
+    print("   - Semantic search finds relevant content without exact keywords")
 
 
 if __name__ == "__main__":

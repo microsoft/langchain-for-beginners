@@ -12,19 +12,30 @@ import os
 from dotenv import load_dotenv
 from langchain_core.documents import Document
 from langchain_core.vectorstores import InMemoryVectorStore
-from langchain_openai import OpenAIEmbeddings
+from langchain_openai import AzureOpenAIEmbeddings
 
 load_dotenv()
+
+
+def get_embeddings_endpoint():
+    """Get the Azure OpenAI endpoint, removing /openai/v1 suffix if present."""
+    endpoint = os.getenv("AI_ENDPOINT", "")
+    if endpoint.endswith("/openai/v1"):
+        endpoint = endpoint.replace("/openai/v1", "")
+    elif endpoint.endswith("/openai/v1/"):
+        endpoint = endpoint.replace("/openai/v1/", "")
+    return endpoint
 
 
 def main():
     print("🌍 Multilingual Semantic Search\n")
     print("=" * 80 + "\n")
 
-    embeddings = OpenAIEmbeddings(
-        model=os.getenv("AI_EMBEDDING_MODEL", "text-embedding-3-small"),
-        base_url=os.getenv("AI_ENDPOINT"),
+    embeddings = AzureOpenAIEmbeddings(
+        azure_endpoint=get_embeddings_endpoint(),
         api_key=os.getenv("AI_API_KEY"),
+        model=os.getenv("AI_EMBEDDING_MODEL", "text-embedding-ada-002"),
+        api_version="2024-02-01",
     )
 
     # Create documents in different languages
@@ -34,54 +45,57 @@ def main():
             metadata={"language": "English"},
         ),
         Document(
-            page_content="Le chat dort sur le canapé.",
-            metadata={"language": "French"},
-        ),
-        Document(
             page_content="El gato está durmiendo en el sofá.",
             metadata={"language": "Spanish"},
+        ),
+        Document(
+            page_content="Le chat dort sur le canapé.",
+            metadata={"language": "French"},
         ),
         Document(
             page_content="Die Katze schläft auf dem Sofa.",
             metadata={"language": "German"},
         ),
         Document(
-            page_content="The dog is running in the park.",
+            page_content="I love programming in Python.",
             metadata={"language": "English"},
         ),
         Document(
-            page_content="I love eating pizza for dinner.",
-            metadata={"language": "English"},
+            page_content="Me encanta programar en Python.",
+            metadata={"language": "Spanish"},
         ),
     ]
 
-    print(f"📚 Creating vector store with {len(docs)} multilingual documents...\n")
+    print(f"📚 Indexing {len(docs)} documents in multiple languages...\n")
 
     vector_store = InMemoryVectorStore.from_documents(docs, embeddings)
 
-    print("✅ Vector store created!\n")
+    print("✅ Documents indexed!\n")
     print("=" * 80 + "\n")
 
-    # Search in English - should find all cat-related sentences
-    query = "feline resting on furniture"
-    print(f'🔍 Query (English): "{query}"\n')
-    print("─" * 80 + "\n")
+    # Search in different languages
+    queries = [
+        ("A sleeping cat", "English query about cats"),
+        ("Un chat qui dort", "French query about cats"),
+        ("Python programming", "English query about programming"),
+        ("Programación en Python", "Spanish query about programming"),
+    ]
 
-    results = vector_store.similarity_search_with_score(query, k=4)
+    for query, description in queries:
+        print(f'🔍 Query ({description}): "{query}"\n')
 
-    for doc, score in results:
-        print(f"Score: {score:.4f}")
-        print(f"Language: {doc.metadata.get('language')}")
-        print(f"Content: {doc.page_content}\n")
+        results = vector_store.similarity_search(query, k=3)
+
+        for i, doc in enumerate(results):
+            print(f"   {i + 1}. [{doc.metadata['language']}] {doc.page_content}")
+
+        print("\n" + "─" * 80 + "\n")
 
     print("=" * 80)
-    print("\n💡 Amazing Result:")
-    print("   The English query 'feline resting on furniture' finds:")
-    print("   - The cat is sleeping on the sofa (English)")
-    print("   - Le chat dort sur le canapé (French)")
-    print("   - El gato está durmiendo en el sofá (Spanish)")
-    print("   - Die Katze schläft auf dem Sofa (German)")
-    print("\n   Embeddings understand MEANING across languages!")
+    print("\n💡 Key Insights:")
+    print("   - Embeddings capture semantic meaning across languages")
+    print("   - A query in one language can find relevant content in others")
+    print("   - This enables truly multilingual search applications")
 
 
 if __name__ == "__main__":

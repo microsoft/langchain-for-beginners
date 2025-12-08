@@ -12,18 +12,29 @@ import os
 import time
 
 from dotenv import load_dotenv
-from langchain_openai import OpenAIEmbeddings
+from langchain_openai import AzureOpenAIEmbeddings
 
 load_dotenv()
+
+
+def get_embeddings_endpoint():
+    """Get the Azure OpenAI endpoint, removing /openai/v1 suffix if present."""
+    endpoint = os.getenv("AI_ENDPOINT", "")
+    if endpoint.endswith("/openai/v1"):
+        endpoint = endpoint.replace("/openai/v1", "")
+    elif endpoint.endswith("/openai/v1/"):
+        endpoint = endpoint.replace("/openai/v1/", "")
+    return endpoint
 
 
 def main():
     print("⚡ Batch Embeddings Example\n")
 
-    embeddings = OpenAIEmbeddings(
-        model=os.getenv("AI_EMBEDDING_MODEL", "text-embedding-3-small"),
-        base_url=os.getenv("AI_ENDPOINT"),
+    embeddings = AzureOpenAIEmbeddings(
+        azure_endpoint=get_embeddings_endpoint(),
         api_key=os.getenv("AI_API_KEY"),
+        model=os.getenv("AI_EMBEDDING_MODEL", "text-embedding-ada-002"),
+        api_version="2024-02-01",
     )
 
     texts = [
@@ -39,49 +50,44 @@ def main():
 
     print(f"📝 Processing {len(texts)} texts...\n")
 
-    # Method 1: Individual embeddings (slower)
-    print("1️⃣  Creating embeddings one-by-one (SLOW):")
+    # Method 1: Batch embedding (recommended)
+    print("Method 1: Batch embedding with embed_documents()")
     start_time = time.time()
+    batch_embeddings = embeddings.embed_documents(texts)
+    batch_time = time.time() - start_time
 
+    print(f"   ✅ Created {len(batch_embeddings)} embeddings in {batch_time:.2f}s")
+    print(f"   Dimensions per embedding: {len(batch_embeddings[0])}\n")
+
+    # Method 2: Individual embedding (for comparison)
+    print("Method 2: Individual embedding with embed_query()")
+    start_time = time.time()
     individual_embeddings = []
     for text in texts:
         embedding = embeddings.embed_query(text)
         individual_embeddings.append(embedding)
-
     individual_time = time.time() - start_time
-    print(f"   Time: {individual_time:.2f}s")
-    print(f"   Created {len(individual_embeddings)} embeddings\n")
 
-    # Method 2: Batch embeddings (faster!)
-    print("2️⃣  Creating embeddings in batch (FAST):")
-    start_time = time.time()
+    print(f"   ✅ Created {len(individual_embeddings)} embeddings in {individual_time:.2f}s\n")
 
-    batch_embeddings = embeddings.embed_documents(texts)
+    # Compare performance
+    print("=" * 80 + "\n")
+    print("📊 Performance Comparison:\n")
+    print(f"   Batch method:      {batch_time:.2f}s")
+    print(f"   Individual method: {individual_time:.2f}s")
 
-    batch_time = time.time() - start_time
-    print(f"   Time: {batch_time:.2f}s")
-    print(f"   Created {len(batch_embeddings)} embeddings\n")
+    if individual_time > batch_time:
+        speedup = individual_time / batch_time
+        print(f"\n   🚀 Batch processing is {speedup:.1f}x faster!")
+    else:
+        print(f"\n   Note: For small batches, performance may be similar")
 
-    print("=" * 80)
-    print("\n📊 Embedding Details:")
-    print(f"   Dimensions per embedding: {len(batch_embeddings[0])}")
-    print(f"   Total vectors created: {len(batch_embeddings)}")
-    sample = ", ".join(f"{n:.4f}" for n in batch_embeddings[0][:5])
-    print(f"   First vector sample: [{sample}...]")
-
-    print("\n💡 Key Takeaways:")
-    print("   - Batch processing is typically faster")
-    print("   - Reduces API calls (lower costs)")
-    print("   - Always use embed_documents() for multiple texts")
-    print("   - Both methods produce identical embeddings")
-
-    # Verify they're the same
-    print("\n✅ Verification:")
-    match = all(
-        abs(a - b) < 0.0001
-        for a, b in zip(individual_embeddings[0], batch_embeddings[0])
-    )
-    print(f"   Individual vs Batch results match: {'YES' if match else 'NO'}")
+    print("\n" + "=" * 80)
+    print("\n💡 Key Insights:")
+    print("   - Use embed_documents() for multiple texts (batching)")
+    print("   - Use embed_query() for single queries")
+    print("   - Batching reduces API calls and improves efficiency")
+    print("   - Consider rate limits when processing large datasets")
 
 
 if __name__ == "__main__":

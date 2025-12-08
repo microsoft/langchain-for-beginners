@@ -13,18 +13,29 @@ import os
 from dotenv import load_dotenv
 from langchain_core.documents import Document
 from langchain_core.vectorstores import InMemoryVectorStore
-from langchain_openai import OpenAIEmbeddings
+from langchain_openai import AzureOpenAIEmbeddings
 
 load_dotenv()
+
+
+def get_embeddings_endpoint():
+    """Get the Azure OpenAI endpoint, removing /openai/v1 suffix if present."""
+    endpoint = os.getenv("AI_ENDPOINT", "")
+    if endpoint.endswith("/openai/v1"):
+        endpoint = endpoint.replace("/openai/v1", "")
+    elif endpoint.endswith("/openai/v1/"):
+        endpoint = endpoint.replace("/openai/v1/", "")
+    return endpoint
 
 
 def main():
     print("🗄️  Vector Store and Semantic Search\n")
 
-    embeddings = OpenAIEmbeddings(
-        model=os.getenv("AI_EMBEDDING_MODEL", "text-embedding-3-small"),
-        base_url=os.getenv("AI_ENDPOINT"),
+    embeddings = AzureOpenAIEmbeddings(
+        azure_endpoint=get_embeddings_endpoint(),
         api_key=os.getenv("AI_API_KEY"),
+        model=os.getenv("AI_EMBEDDING_MODEL", "text-embedding-ada-002"),
+        api_version="2024-02-01",
     )
 
     # Create documents about different topics
@@ -84,23 +95,11 @@ def main():
 
         print("─" * 80 + "\n")
 
-    # Search with similarity scores
     print("=" * 80)
-    print("\n📊 Search with Similarity Scores:\n")
-
-    query = "animals that make good house pets"
-    results_with_scores = vector_store.similarity_search_with_score(query, k=4)
-
-    print(f'Query: "{query}"\n')
-
-    for doc, score in results_with_scores:
-        print(f"Score: {score:.4f} - {doc.page_content}")
-
-    print("\n" + "=" * 80)
-    print("\n💡 Notice:")
-    print("   - Results are ranked by semantic similarity")
-    print("   - Exact keywords aren't required!")
-    print("   - AI understands context and meaning")
+    print("\n💡 Key Insights:")
+    print("   - Vector stores enable fast similarity search over documents")
+    print("   - Semantic search finds relevant content even without exact keyword matches")
+    print("   - Metadata helps categorize and filter results")
 
 
 if __name__ == "__main__":
