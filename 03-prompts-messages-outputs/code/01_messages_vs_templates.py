@@ -22,7 +22,11 @@ def main():
     print("🎯 Messages vs Templates: Two Approaches\n")
     print("=" * 80)
 
-    model = ChatOpenAI(model=os.environ.get("AI_MODEL", "gpt-5-mini"))
+    model = ChatOpenAI(
+        model=os.getenv("AI_MODEL"),
+        base_url=os.getenv("AI_ENDPOINT"),
+        api_key=os.getenv("AI_API_KEY"),
+    )
 
     # ==========================================
     # APPROACH 1: Messages

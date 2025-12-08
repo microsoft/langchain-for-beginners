@@ -41,7 +41,11 @@ class Company(BaseModel):
 def main():
     print("🏢 Complex Structured Output Example\n")
 
-    model = ChatOpenAI(model=os.environ.get("AI_MODEL", "gpt-5-mini"))
+    model = ChatOpenAI(
+        model=os.getenv("AI_MODEL"),
+        base_url=os.getenv("AI_ENDPOINT"),
+        api_key=os.getenv("AI_API_KEY"),
+    )
 
     # Create structured model
     structured_model = model.with_structured_output(Company)
@@ -81,13 +85,13 @@ def main():
     print(f"   Products: {', '.join(result1.products)}")
     print(f"   Employees: {result1.employee_count:,}")
 
-    # Test 2: SpaceX
+    # Test 2: Adobe
     print("\n" + "=" * 80)
-    print("\n2️⃣  SpaceX:\n")
+    print("\n2️⃣  Adobe:\n")
     company_info2 = """
-    SpaceX, based in Hawthorne, California, was established in 2002.
-    The company focuses on spacecraft, rockets, and satellite internet (Starlink).
-    They employ around 13,000 people and remain privately held.
+    Adobe was founded in 1982 and is headquartered in San Jose, California.
+    The company is publicly traded and has approximately 30,000 employees.
+    Their main products include Photoshop, Illustrator, Acrobat, and Creative Cloud.
     """
 
     result2 = chain.invoke({"text": company_info2})
