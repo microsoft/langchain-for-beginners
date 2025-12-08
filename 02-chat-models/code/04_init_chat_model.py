@@ -35,6 +35,7 @@ def standard_openai_example():
         model_provider="openai",
         temperature=0.7,
         api_key=os.environ.get("OPENAI_API_KEY"),
+        base_url=os.getenv("AI_ENDPOINT")
     )
 
     response = model.invoke([
@@ -83,7 +84,11 @@ def course_recommendation():
     print("\n=== Recommended Approach for This Course ===\n")
 
     # For GitHub Models and Azure OpenAI, use ChatOpenAI directly:
-    model = ChatOpenAI(model=os.environ.get("AI_MODEL", "gpt-5-mini"))
+    model = ChatOpenAI(
+        model=os.getenv("AI_MODEL"),
+        base_url=os.getenv("AI_ENDPOINT"),
+        api_key=os.getenv("AI_API_KEY")
+    )
 
     response = model.invoke([HumanMessage(content="What is LangChain in one sentence?")])
 

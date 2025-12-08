@@ -33,6 +33,8 @@ def temperature_comparison():
         model = ChatOpenAI(
             model=model_name,
             temperature=temp,
+            base_url=os.getenv("AI_ENDPOINT"),
+            api_key=os.getenv("AI_API_KEY"),
         )
 
         try:
