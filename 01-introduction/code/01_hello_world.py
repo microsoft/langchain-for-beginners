@@ -3,14 +3,15 @@ Lesson 01 - Hello World with LangChain
 This example demonstrates a basic LLM call using ChatOpenAI.
 """
 
-from langchain_openai import ChatOpenAI
-from dotenv import load_dotenv
 import os
+
+from dotenv import load_dotenv
+from langchain_openai import ChatOpenAI
 
 load_dotenv()
 
 def main():
-    print("🚀 Hello LangChain!\n")
+    print("🦜🔗 Hello LangChain!\n")
 
     # Create a chat model instance
     model = ChatOpenAI(

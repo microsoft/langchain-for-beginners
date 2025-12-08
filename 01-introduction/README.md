@@ -6,7 +6,7 @@ Welcome to your first step in building AI-powered applications with LangChain! I
 
 - Completed [Course Setup](../00-course-setup/README.md)
 
-## 🎯 Learning Objectives
+## Learning Objectives
 
 By the end of this chapter, you'll be able to:
 
@@ -147,7 +147,7 @@ import os
 load_dotenv()
 
 def main():
-    print("🚀 Hello LangChain!\n")
+    print("🦜🔗 Hello LangChain!\n")
 
     # Create a chat model instance
     model = ChatOpenAI(
@@ -170,8 +170,8 @@ if __name__ == "__main__":
 
 When you run this example with `python 01-introduction/code/01_hello_world.py`, you'll see:
 
-```
-🚀 Hello LangChain!
+```bash
+🦜🔗 Hello LangChain!
 
 🤖 AI Response: LangChain is a framework for building applications powered by large language models (LLMs).
 
@@ -199,7 +199,7 @@ We read these from environment variables (`AI_MODEL`, `AI_ENDPOINT`, `AI_API_KEY
 **Why use environment variables?**
 - `AI_MODEL` specifies which AI model to use (like `gpt-5` or `gpt-5-mini`)
 - `AI_ENDPOINT` tells the application where to find the AI service
-- `AI_API_KEY` provides authentication credentials
+- `AI_API_KEY` provides authentication credentials.
 
 Storing these in `.env` means you can switch between providers (GitHub Models, Azure, OpenAI etc.) by changing just the configuration file, not your code.
 
@@ -255,7 +255,7 @@ if __name__ == "__main__":
 
 When you run this example with `python 01-introduction/code/02_message_types.py`, you'll see something similar to:
 
-```
+```bash
 🎭 Understanding Message Types
 
 🤖 AI Response:
@@ -420,7 +420,7 @@ graph LR
 
 ---
 
-## 🎮 Try This Yourself!
+## 🎮 Try More Yourself
 
 **Quick Challenge**: Before moving to the next section, try modifying Example 1:
 
@@ -460,7 +460,7 @@ Let's review what you learned:
 
 ## 🏆 Assignment
 
-Ready to practice? Complete the challenges in [assignment.md](./assignment.md)!
+The more you practice the better you'll get! We've made a few more challenges you can try to help you practice. Complete the challenges in [assignment.md](./assignment.md)!
 
 The assignment includes:
 1. **System Prompts Experiment** - Learn how SystemMessage affects AI behavior

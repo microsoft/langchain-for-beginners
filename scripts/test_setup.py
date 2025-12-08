@@ -3,6 +3,7 @@ Setup Test - Verify AI Provider Access
 """
 import os
 import sys
+
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
 
@@ -30,7 +31,7 @@ def test_setup():
             api_key=os.getenv("AI_API_KEY"),
         )
         
-        response = model.invoke("Say 'Setup successful!' if you can read this.")
+        response = model.invoke("Say 'Setup successful!'")
         
         print("✅ SUCCESS! Your AI provider is working!")
         print(f"   Provider: {os.getenv('AI_ENDPOINT')}")

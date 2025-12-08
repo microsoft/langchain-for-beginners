@@ -1,15 +1,22 @@
-from langchain_openai import ChatOpenAI
-from dotenv import load_dotenv
+"""
+Lesson 01 - Model Comparison in LangChain
+This example shows how to compare different AI models.
+"""
+
 import os
 import time
 
+from dotenv import load_dotenv
+from langchain_openai import ChatOpenAI
+
 load_dotenv()
+
 
 def compare_models():
     print("🔬 Comparing AI Models\n")
 
     prompt = "Explain recursion in programming in one sentence."
-    models = ["gpt-5", "gpt-5-mini"]
+    models = ["gpt-4o", "gpt-4o-mini"]
 
     for model_name in models:
         print(f"\n📊 Testing: {model_name}")
@@ -30,9 +37,10 @@ def compare_models():
 
     print("\n✅ Comparison complete!")
     print("\n💡 Key Observations:")
-    print("   - gpt-5 is more capable and detailed")
-    print("   - gpt-5-mini is faster and uses fewer resources")
+    print("   - gpt-4o is more capable and detailed")
+    print("   - gpt-4o-mini is faster and uses fewer resources")
     print("   - Choose based on your needs: speed vs. capability")
+
 
 if __name__ == "__main__":
     compare_models()

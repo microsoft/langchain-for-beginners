@@ -3,10 +3,11 @@ Lesson 01 - Message Types in LangChain
 This example demonstrates how to use different message types (SystemMessage, HumanMessage).
 """
 
-from langchain_openai import ChatOpenAI
-from langchain_core.messages import HumanMessage, SystemMessage
-from dotenv import load_dotenv
 import os
+
+from dotenv import load_dotenv
+from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_openai import ChatOpenAI
 
 load_dotenv()
 
