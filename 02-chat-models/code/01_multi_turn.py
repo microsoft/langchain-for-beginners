@@ -59,8 +59,5 @@ def main():
     print("\n\n✅ Notice how the AI maintains context throughout the conversation!")
     print(f"📊 Total messages in history: {len(messages)} messages, that include 1 system message, 3 Human messages and 2 AI responses")
 
-    print(messages)
-
-
 if __name__ == "__main__":
     main()

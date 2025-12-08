@@ -64,16 +64,21 @@ def max_tokens_example():
 
     prompt = "Write a detailed explanation of machine learning in 5 paragraphs."
 
+    # Note: Reasoning models (like gpt-5-mini) use tokens internally for
+    # "chain of thought" reasoning before producing visible output. They need higher
+    # limits (500+) to have tokens left for the actual response.
     is_ci = os.environ.get("CI") == "true"
-    token_limits = [150] if is_ci else [50, 150, 500]  # Reduce in CI mode
+    token_limits = [1000] if is_ci else [800, 1500, 3000]  # Higher for reasoning models
 
     for max_tokens in token_limits:
         print(f"\nMax Tokens: {max_tokens}")
         print("-" * 80)
 
         model = ChatOpenAI(
-            model=os.environ.get("AI_MODEL", "gpt-5-mini"),
+            model=os.getenv("AI_MODEL"),
             max_tokens=max_tokens,
+            base_url=os.getenv("AI_ENDPOINT"),
+            api_key=os.getenv("AI_API_KEY"),
         )
 
         try:

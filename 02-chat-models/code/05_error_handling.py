@@ -18,7 +18,11 @@ load_dotenv()
 
 def robust_call(prompt: str, max_retries: int = 3) -> str:
     """Makes an API call with automatic retry logic using LangChain's built-in with_retry()"""
-    model = ChatOpenAI(model=os.environ.get("AI_MODEL", "gpt-5-mini"))
+    model = ChatOpenAI(
+            model=os.getenv("AI_MODEL"),
+            base_url=os.getenv("AI_ENDPOINT"),
+            api_key=os.getenv("AI_API_KEY"),
+        )
 
     # Use LangChain's built-in retry logic - automatically handles retries with exponential backoff
     model_with_retry = model.with_retry(stop_after_attempt=max_retries)
@@ -42,6 +46,7 @@ def error_examples():
         bad_model = ChatOpenAI(
             model=os.environ.get("AI_MODEL", "gpt-5-mini"),
             api_key="invalid_key_12345",  # Intentionally invalid
+            base_url=os.getenv("AI_ENDPOINT")
         )
 
         print("🔄 Attempting call with invalid API key...")
@@ -65,14 +70,12 @@ def error_examples():
     # Example 3: Error categorization
     print("\n3️⃣  Example: Categorizing Different Error Types\n")
 
-    # Save original key
-    original_key = os.environ.get("AI_API_KEY")
-
     try:
         # Test with invalid key
         bad_model = ChatOpenAI(
             model=os.environ.get("AI_MODEL", "gpt-5-mini"),
             api_key="sk-invalid12345",
+            base_url=os.getenv("AI_ENDPOINT"),
         )
 
         print("🔄 Testing error categorization with invalid credentials...")

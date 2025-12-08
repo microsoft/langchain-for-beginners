@@ -256,7 +256,7 @@ for chunk in model.stream("Explain how the internet works in 3 paragraphs."):
     print(chunk.content, end="", flush=True)  # Display immediately without newline
 ```
 
-**Code**: [`code/02_streaming.py`](./code/02_streaming.py)
+**Code**: [`code/02_streaming.py`](./code/02_streaming.py)  
 **Run**: `python 02-chat-models/code/02_streaming.py`
 
 **Example code snippet:**
@@ -300,9 +300,9 @@ If you were to run just the `streaming_example` function in `python 02-chat-mode
 
 ```bash
 🤖 AI (streaming):
-The internet is a global network of interconnected computers that communicate using standardized protocols, primarily TCP/IP. When you visit a website, your device sends a request to a server, which responds with the data needed to display the page. This data travels through multiple routers and networks before reaching you.
+The internet is a global network of networks: countless computers, phones, servers, and other devices are connected by physical links (fiber-optic and copper cables, cell towers and satellites) and by local networks run by Internet Service Providers (ISPs). Data sent between devices is broken into small labeled units called packets, each carrying source and destination addresses (IP addresses). Routers and switches along the path read those addresses and forward packets toward their destination across the fastest available routes, hopping between smaller networks and large backbone lines until the packets arrive and are reassembled.
 
-At its core, the internet works through a system of addresses called IP addresses, which uniquely identify each device. Domain names (like bing.com) are translated to IP addresses by DNS servers. When you type a URL, your browser contacts these DNS servers to find the right destination. Data on the internet is broken into small packets that travel independently and are reassembled at the destination. This packet-switching method makes the internet resilient and efficient, allowing information to take different routes if one path is blocked or congested.
+On top of this physical and routing layer are standard communication rules, or protocols, that make sense of the packets: TCP/IP governs reliable delivery and addressing, DNS translates human domain names into IP addresses, and application protocols like HTTP/HTTPS define how web pages are requested and delivered. When you type a web address, your device asks a DNS server for the site’s IP, opens a TCP connection to that server, and uses HTTP/HTTPS to request content, which the server sends back in packets; systems like caching, content delivery networks, and encryption (TLS) help make that process faster and more secure.
 
 ✅ Stream complete!
 ```
@@ -346,9 +346,9 @@ You'll notice the text appears progressively, word by word, rather than all at o
 
 You can control how the LLM responds by adjusting parameters. These can vary by provider/model so always check the documentation.
 
-### Key Parameters
+### 2 Key Parameters
 
-#### Temperature (0.0 - 2.0)
+#### i. Temperature (0.0 - 2.0)
 
 Temperature controls randomness and creativity:
 
@@ -363,11 +363,11 @@ Temperature controls randomness and creativity:
 >
 > - **GitHub Models (OpenAI)**: Supports 0.0 to 2.0 for most models
 > - **Microsoft Foundry**: Generally limits temperature to 0.0-1.0 depending upon the model
-> - **Some models** (like gpt-5-mini): May only support the default temperature value (1) and reject other values
+> - **Some models**: May only support the default temperature value (1) and reject other values
 >
 > The temperature demo code includes error handling to gracefully skip unsupported values, so you can run it with any model without crashes.
 
-#### Max Tokens
+#### ii. Max Tokens
 
 **What are tokens?** Tokens are the basic units of text that AI models process. Think of them as pieces of words - roughly 1 token ≈ 4 characters or ¾ of a word. For example, "Hello world!" is about 3 tokens.
 
@@ -385,9 +385,11 @@ Limits response length:
 
 ### Example 3: Model Parameters
 
-Let's see how to control creativity by adjusting the `temperature` parameter in `ChatOpenAI`.
+Let's see how to control creativity by adjusting the `temperature` parameter and legnth of response by adjusting the `max_tokens` parameter in `ChatOpenAI`.
 
 **Key code you'll work with:**
+
+For temperature:
 
 ```python
 temperatures = [0, 1, 2]
@@ -401,6 +403,21 @@ for temp in temperatures:
     )
 
     # Try same prompt twice to see variation
+    response = model.invoke(prompt)
+```
+
+For max tokens:
+
+```python
+for max_tokens in token_limits:
+
+    model = ChatOpenAI(
+        model=os.getenv("AI_MODEL"),
+        max_tokens=max_tokens,
+        # ... other config
+    )
+
+    # get character count
     response = model.invoke(prompt)
 ```
 
@@ -482,7 +499,7 @@ When you run this example with `python 02-chat-models/code/03_parameters.py`, th
    - Higher values (1.5-2.0): More creative and varied responses
 ```
 
-**With a model that only supports default temperature (like gpt-5-mini):**
+**With a model that only supports default temperature (like gpt-4-mini):**
 
 ```bash
 🌡️ Temperature: 0
@@ -522,6 +539,158 @@ When you run this example with `python 02-chat-models/code/03_parameters.py`, th
 
 ---
 
+## 🔌 Provider-Agnostic Initialization
+
+LangChain provides `init_chat_model()` for provider-agnostic initialization. Think of it like universal power adapters - instead of different chargers for each device (Microsoft Foundry, OpenAI, Anthropic, Google), you have one adapter that works with all of them.
+
+### Why Use init_chat_model()?
+
+- 🔄 **Easy Provider Switching**: Change providers by updating a single string
+- 🏗️ **Framework Building**: Create libraries that support many providers
+- 🎯 **Unified Interface**: Same code pattern works across all providers
+- ✅ **Microsoft Foundry Support**: Works with Microsoft Foundry and GitHub Models via `langchain-azure-ai`
+
+### Setting Up LangChain Azure AI
+
+For Azure AI Foundry and GitHub Models, use the `langchain-azure-ai` package. This package has already been installed in your dev environment with the requirements.txt file but this is the command you would run to install it seperately:
+
+```bash
+pip install langchain-azure-ai
+```
+
+**Endpoint Format**:
+
+The `\models` endpoint is required when using LangChain Azure AI. 
+
+| Provider | Endpoint Format | Example |
+|----------|-----------------|---------|
+| GitHub Models | Works as-is | `https://models.inference.ai.azure.com` |
+| Microsoft Foundry | Use `/models` endpoint | `https://your-resource.openai.azure.com/models` |
+
+> **⚠️ Note**: LangChain Azure AI expects the `/models` endpoint format, not `/openai/v1`. The example code automatically converts `/openai/v1` endpoints to `/models` format if needed.
+
+### Example 4: Provider-Agnostic Initialization
+
+This example shows how to use `init_chat_model()` with Azure AI for a clean, provider-agnostic approach.
+
+**Key code you'll work with:**
+
+```python
+from langchain.chat_models import init_chat_model
+
+# Set environment variables for Azure AI
+os.environ["AZURE_AI_ENDPOINT"] = os.getenv("AI_ENDPOINT")
+os.environ["AZURE_AI_CREDENTIAL"] = os.getenv("AI_API_KEY")
+
+# Initialize using azure_ai provider prefix
+model = init_chat_model("azure_ai:gpt-5-mini")
+
+response = model.invoke("What is LangChain?")
+```
+
+**Code**: [`code/04_init_chat_model.py`](./code/04_init_chat_model.py)  
+**Run**: `python 02-chat-models/code/04_init_chat_model.py`
+
+**Example code:**
+
+```python
+from langchain.chat_models import init_chat_model
+from langchain_core.messages import HumanMessage
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
+def main():
+    print("🔌 Provider-Agnostic Initialization with Azure AI\n")
+
+    # Set environment variables required by LangChain Azure AI
+    os.environ["AZURE_AI_ENDPOINT"] = os.getenv("AI_ENDPOINT", "")
+    os.environ["AZURE_AI_CREDENTIAL"] = os.getenv("AI_API_KEY", "")
+
+    model_name = os.getenv("AI_MODEL", "gpt-5-mini")
+
+    # Initialize model using the azure_ai provider prefix
+    model = init_chat_model(f"azure_ai:{model_name}")
+
+    response = model.invoke([
+        HumanMessage(content="What is LangChain in one sentence?")
+    ])
+
+    print("✅ Response:", response.content)
+
+if __name__ == "__main__":
+    main()
+```
+
+> **🤖 Try with [GitHub Copilot](https://github.com/features/copilot) Chat:** Want to explore this code further? Open this file in your editor and ask Copilot:
+>
+> - "How do I switch from Azure AI to Anthropic using init_chat_model?"
+> - "What environment variables does langchain-azure-ai need?"
+
+### Expected Output
+
+When you run this example with `python 02-chat-models/code/04_init_chat_model.py`, you'll see:
+
+```bash
+🔌 Provider-Agnostic Initialization with LangChain Azure AI
+
+============================================================
+
+=== init_chat_model() with Azure AI ===
+
+📝 Note: Converted endpoint from /openai/v1 to /models format
+🔗 Using endpoint: https://your-resource.openai.azure.com/models
+🤖 Using model: gpt-5-mini
+
+✅ Response: LangChain is a framework for developing applications powered by 
+language models, providing tools and abstractions for building chains, agents, 
+and retrieval systems.
+
+=== Provider Switching Concepts ===
+
+init_chat_model() makes switching between providers simple:
+
+  # Azure AI (recommended for this course)
+  model = init_chat_model("azure_ai:gpt-5-mini")
+
+  # Standard OpenAI
+  model = init_chat_model("openai:gpt-5-mini")
+
+  # Anthropic
+  model = init_chat_model("anthropic:claude-3-5-sonnet-20241022")
+
+  # Google
+  model = init_chat_model("google-genai:gemini-pro")
+
+💡 Same interface, different providers - just change the model string!
+```
+
+> **📝 Note**: If you're using Azure AI Foundry with an `/openai/v1` endpoint, the script automatically converts it to the `/models` format required by `langchain-azure-ai`.
+
+### How It Works
+
+**What's happening**:
+
+1. **Endpoint conversion**: If your endpoint ends with `/openai/v1`, it's automatically converted to `/models`
+2. **Environment setup**: Set `AZURE_AI_ENDPOINT` and `AZURE_AI_CREDENTIAL` from your `.env` file
+3. **Provider prefix**: Use `azure_ai:<model_name>` format to specify Azure AI provider
+4. **Unified interface**: Same `invoke()` method works regardless of provider
+5. **Easy switching**: Change providers by updating the model string
+
+**Provider String Format**:
+
+| Provider | Format | Example |
+|----------|--------|--------|
+| Azure AI | `azure_ai:<model>` | `azure_ai:gpt-5-mini` |
+| OpenAI | `openai:<model>` | `openai:gpt-4` |
+| Anthropic | `anthropic:<model>` | `anthropic:claude-3-5-sonnet` |
+| Google | `google-genai:<model>` | `google-genai:gemini-pro` |
+
+Microsoft Foundry and GitHub models both provide built-in access to the OpenAI, Anthropic, DeepSeek, Qwen, Mistral models and more! Just change the name of the model you are using `azure_ai:claude-4-5-sonnet`
+
+---
+
 ## 🛡️ Error Handling with Built-In Retries
 
 API calls can fail due to rate limits, network issues, or temporary service problems. LangChain provides built-in retry logic with exponential backoff.
@@ -533,7 +702,7 @@ API calls can fail due to rate limits, network issues, or temporary service prob
 - **500 Server Error**: Temporary provider issues
 - **Network timeout**: Connection problems
 
-### Example 4: Using Built-In Retry Logic
+### Example 5: Using Built-In Retry Logic
 
 Instead of implementing manual retry logic, use LangChain's `with_retry()` method which handles exponential backoff automatically:
 
@@ -629,7 +798,7 @@ if __name__ == "__main__":
 
 Tokens power AI models, and they directly impact cost and performance. Let's track them!
 
-### Example 5: Tracking Token Usage
+### Example 6: Tracking Token Usage
 
 This example shows you how to track token usage for cost estimation and monitoring, helping you optimize your AI application expenses.
 
@@ -739,7 +908,7 @@ data science, machine learning, and automation.
 
 Two key strategies to reduce costs:
 
-**1. Limit response length with max_tokens**
+**1. Limit response length with max_tokens:**
 
 ```python
 model = ChatOpenAI(
@@ -750,7 +919,7 @@ model = ChatOpenAI(
 )
 ```
 
-**2. Trim conversation history**
+**2. Trim conversation history:**
 
 ```python
 # Keep only recent messages to reduce input tokens
@@ -771,8 +940,9 @@ graph LR
     A[Chat Models] --> B[Multi-Turn]
     A --> C[Streaming]
     A --> D[Parameters]
-    A --> E[Error Handling]
-    A --> F[Token Tracking]
+    A --> E[Provider-Agnostic]
+    A --> F[Error Handling]
+    A --> G[Token Tracking]
 ```
 
 *Master these concepts to build robust AI applications.*
@@ -784,6 +954,7 @@ graph LR
 - **Multi-turn conversations**: Send entire message history with each call
 - **Streaming**: Display responses as they generate for better UX
 - **Temperature**: Controls randomness (0 = consistent, 2 = creative)
+- **Provider-agnostic**: Use `init_chat_model()` with `langchain-azure-ai` to easily switch providers
 - **Error handling**: Always use try-except and implement retries
 - **Token tracking**: Monitor usage and estimate costs for budgeting
 - **Cost optimization**: Choose right models, limit responses, cache results
@@ -840,71 +1011,3 @@ If you get stuck or have any questions about building AI apps, join:
 If you have product feedback or errors while building visit:
 
 [Microsoft Foundry Developer Forum](https://aka.ms/foundry/forum)
-
----
-
-## 📎 Appendix: Provider-Agnostic Initialization
-
-> **�� Note:** This is a bonus topic. The recommended approach for this course is using `ChatOpenAI` directly, as shown in all the examples above.
-
-### Alternative Pattern: init_chat_model()
-
-LangChain provides `init_chat_model()` for provider-agnostic initialization. Think of it like universal power adapters - instead of different chargers for each device (OpenAI, Anthropic, Google), you have one adapter that works with all of them.
-
-**When `init_chat_model()` Shines:**
-
-- 🔄 **Multiple Provider Types**: Switching between OpenAI, Anthropic, Google, etc.
-- 🏗️ **Framework Building**: Creating libraries that support many providers
-- 🎯 **Provider-Agnostic Code**: Write once, work with any standard provider
-
-**When to Use `ChatOpenAI` (This Course):**
-
-- ✅ **GitHub Models**: Custom endpoints require specific configuration
-- ✅ **Azure OpenAI**: Non-standard API paths work better with ChatOpenAI
-- ✅ **Learning**: More explicit and easier to understand
-- ✅ **Single Provider**: When you're primarily using one provider
-
-### Example: Provider-Agnostic Patterns
-
-**Code**: [`code/04_init_chat_model.py`](./code/04_init_chat_model.py)
-
-```python
-from langchain.chat_models import init_chat_model
-from langchain_openai import ChatOpenAI
-import os
-
-# Switching between different provider types (conceptual)
-openai_model = init_chat_model(
-    "gpt-5-mini",
-    model_provider="openai",
-    api_key=os.environ.get("OPENAI_API_KEY"),
-)
-
-anthropic_model = init_chat_model(
-    "claude-3-5-sonnet-20241022",
-    model_provider="anthropic",
-    api_key=os.environ.get("ANTHROPIC_API_KEY"),
-)
-
-# Recommended for this course (GitHub Models/Azure)
-model = ChatOpenAI(
-    model=os.getenv("AI_MODEL"),
-    base_url=os.getenv("AI_ENDPOINT"),
-    api_key=os.getenv("AI_API_KEY")
-)
-```
-
-> **🤖 Try with [GitHub Copilot](https://github.com/features/copilot) Chat:** Want to explore this code further? Open this file in your editor and ask Copilot:
-> - "What are the advantages of init_chat_model over using ChatOpenAI directly?"
-> - "How would I switch from OpenAI to Anthropic using init_chat_model?"
-
-### Comparison
-
-| Feature | ChatOpenAI | init_chat_model() |
-|---------|-----------|-------------------|
-| Custom Endpoints | ✅ Excellent | ⚠️ Limited |
-| Type Safety | ✅ Excellent | ✅ Good |
-| Learning Curve | ✅ Easier | 🔄 Moderate |
-| Use Case | Single provider or custom endpoints | Multiple standard providers |
-
-**For this course:** Stick with `ChatOpenAI`. It's more explicit and works best with GitHub Models and Azure OpenAI.
