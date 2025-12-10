@@ -78,10 +78,10 @@ def main():
 
     print("💡 Key points about templates:")
     print("   • Reusable with variables")
-    print("   • Required by create_stuff_documents_chain() for RAG")
     print("   • Great for consistent prompt structure")
-    print("   • Pipes directly to models")
-    print("   • Ideal for RAG and chain-based workflows")
+    print("   • Pipes directly to models with | operator")
+    print("   • Ideal for structured, repeatable prompts")
+    print("   • Easy to version and share across teams")
 
     # ==========================================
     # WHEN TO USE EACH
@@ -97,11 +97,11 @@ def main():
     print("   • Need full control over message flow")
 
     print("✅ USE TEMPLATES when:")
-    print("   • Building RAG systems")
     print("   • Need reusable prompt patterns")
     print("   • Want variable substitution")
-    print("   • Creating chains with create_stuff_documents_chain()")
+    print("   • Building structured workflows with prompt | model")
     print("   • Consistent prompts across application")
+    print("   • Sharing prompts across team members")
 
     print("📚 Modern LangChain Pattern:")
     print("   • Messages: Dynamic workflows + middleware")
