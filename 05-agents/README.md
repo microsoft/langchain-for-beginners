@@ -354,8 +354,8 @@ language models (LLMs).
 
 To understand what `create_agent()` does under the hood, let's implement the ReAct loop manually.
 
-**Code**: [`code/03_manual_react.py`](./code/03_manual_react.py)  
-**Run**: `python 05-agents/code/03_manual_react.py`
+**Code**: [`samples/basic_agent_manual_loop.py`](./samples/basic_agent_manual_loop.py)
+**Run**: `python 05-agents/samples/basic_agent_manual_loop.py`
 
 **Example code:**
 
