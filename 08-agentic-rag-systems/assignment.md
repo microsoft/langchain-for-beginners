@@ -204,7 +204,7 @@ Solutions available in [`solution/`](./solution/) folder. Try on your own first!
 
 ## Next Steps
 
-Congratulations! You've completed the LangChain for Beginners course! 🎉
+Congratulations! You've completed the Agentic RAG chapter. 🎉
 
 You now know how to:
 
@@ -217,12 +217,13 @@ You now know how to:
 
 ### Continue Learning
 
+- Deploy your LangChain agent in [Deploy LangChain Agents to Microsoft Foundry](../09-deploy-to-microsoft-foundry/README.md)
 - Explore [LangChain Python Documentation](https://python.langchain.com/)
 - Build your own agentic applications
 - Experiment with different vector stores (Pinecone, Chroma, Weaviate)
 - Try extended agent patterns and multi-agent systems
 - Integrate MCP servers for extended capabilities
-- Deploy your agents to production
+- Prepare your agents for production hosting
 
 ---
 

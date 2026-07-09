@@ -1,0 +1,33 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/Azure/azure-dev/main/schemas/v1.0/azure.yaml.json
+name: langchain-rag-foundry-agent
+
+requiredVersions:
+  extensions:
+    azure.ai.agents: ">=0.1.0-preview"
+
+services:
+  ai-project:
+    host: azure.ai.project
+    # Set AZURE_AI_PROJECT_ENDPOINT in your azd environment to use an existing project.
+    # Example: azd env set AZURE_AI_PROJECT_ENDPOINT "https://<resource>.services.ai.azure.com/api/projects/<project>"
+    endpoint: ${AZURE_AI_PROJECT_ENDPOINT}
+
+  langchain-rag-agent:
+    host: azure.ai.agent
+    project: src/langchain-rag-agent
+    kind: hosted
+    name: langchain-rag-agent
+    description: Agentic RAG assistant built with LangChain and hosted in Microsoft Foundry.
+    uses:
+      - ai-project
+    protocols:
+      - protocol: responses
+        version: 2.0.0
+    env:
+      FOUNDRY_MODEL_NAME: ${FOUNDRY_MODEL_NAME}
+    codeConfiguration:
+      runtime: python_3_13
+      entryPoint:
+        - python
+        - main.py
+      dependencyResolution: remote_build
