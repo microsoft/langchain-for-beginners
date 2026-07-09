@@ -24,7 +24,7 @@ By the end of this chapter, you'll be able to:
 - ✅ Configure a Foundry project and model deployment for your agent
 - ✅ Test the hosted-agent wrapper locally
 - ✅ Deploy the agent from VS Code with Microsoft Foundry Toolkit
-- ✅ Optionally deploy and invoke the same agent with Azure Developer CLI
+- ✅ Understand how the hosted-agent YAML maps to the ContainerAgent schema
 
 ---
 
@@ -37,7 +37,7 @@ The same pattern works with the vector store and retrieval tools you built in Ch
 1. Keep your LangChain model setup, tools, and system prompt.
 2. Build the agent with `create_agent()`.
 3. Wrap that graph with the Foundry Responses host.
-4. Deploy the project with Foundry Toolkit or Azure Developer CLI.
+4. Deploy the project with Foundry Toolkit.
 
 ---
 
@@ -61,10 +61,10 @@ Think of this chapter as the bridge from "I built a LangChain agent" to "my team
 
 The sample project is here:
 
-- **Project**: [`code/01_foundry_hosted_agent/`](./code/01_foundry_hosted_agent/)
-- **Code**: [`code/01_foundry_hosted_agent/src/langchain-rag-agent/main.py`](./code/01_foundry_hosted_agent/src/langchain-rag-agent/main.py)
-- **Hosted agent config**: [`code/01_foundry_hosted_agent/azure.yaml`](./code/01_foundry_hosted_agent/azure.yaml)
-- **Dependencies**: [`code/01_foundry_hosted_agent/src/langchain-rag-agent/requirements.txt`](./code/01_foundry_hosted_agent/src/langchain-rag-agent/requirements.txt)
+- **Project**: [`code/`](./code/)
+- **Code**: [`code/main.py`](./code/main.py)
+- **Hosted agent config**: [`code/azure.yaml`](./code/azure.yaml)
+- **Dependencies**: [`code/requirements.txt`](./code/requirements.txt)
 
 **Key code you'll work with:**
 
@@ -94,7 +94,7 @@ ResponsesHostServer(build_agent()).run(port=port)
 
 ## Step 1: Prepare Your LangChain Agent for Hosting
 
-Open [`main.py`](./code/01_foundry_hosted_agent/src/langchain-rag-agent/main.py) and find `search_course_notes`. This tool is intentionally small so you can focus on deployment first.
+Open [`main.py`](./code/main.py) and find `search_course_notes`. This tool is intentionally small so you can focus on deployment first.
 
 To deploy your own agentic RAG system, replace `COURSE_NOTES` and `search_course_notes` with the vector store and retrieval tool you built in Chapter 8.
 
@@ -127,14 +127,14 @@ In VS Code, open the Command Palette (**Ctrl+Shift+P**) and use the Foundry Tool
 
 4. Copy the model deployment name, for example `gpt-4.1`.
 
-For local testing, add these values to your shell or to a local `.env` file inside `code/01_foundry_hosted_agent/src/langchain-rag-agent/`:
+For local testing, add these values to your shell or to a local `.env` file inside `code/`:
 
 ```bash
 FOUNDRY_PROJECT_ENDPOINT=https://<resource>.services.ai.azure.com/api/projects/<project>
-FOUNDRY_MODEL_NAME=<your-model-deployment-name>
+AZURE_AI_MODEL_DEPLOYMENT_NAME=<your-model-deployment-name>
 ```
 
-When the agent runs in Foundry, the platform injects `FOUNDRY_PROJECT_ENDPOINT`. The sample [`azure.yaml`](./code/01_foundry_hosted_agent/azure.yaml) passes `FOUNDRY_MODEL_NAME` from your `azd` environment into the hosted runtime.
+When the agent runs in Foundry, the platform injects `FOUNDRY_PROJECT_ENDPOINT`. The sample [`azure.yaml`](./code/azure.yaml) follows the ContainerAgent schema and passes `AZURE_AI_MODEL_DEPLOYMENT_NAME` into the hosted runtime.
 
 ---
 
@@ -146,14 +146,14 @@ Use the same virtual environment style from [Course Setup](../00-course-setup/RE
 
 ```powershell
 venv\Scripts\activate
-pip install -r 09-deploy-to-microsoft-foundry/code/01_foundry_hosted_agent/src/langchain-rag-agent/requirements.txt
+pip install -r 09-deploy-to-microsoft-foundry/code/requirements.txt
 ```
 
 **macOS or Linux:**
 
 ```bash
 source venv/bin/activate
-pip install -r 09-deploy-to-microsoft-foundry/code/01_foundry_hosted_agent/src/langchain-rag-agent/requirements.txt
+pip install -r 09-deploy-to-microsoft-foundry/code/requirements.txt
 ```
 
 If you are using GitHub Codespaces, the course environment is already activated; run the same `pip install -r ...` command.
@@ -171,7 +171,7 @@ az login
 Then run the host from the source folder:
 
 ```bash
-cd 09-deploy-to-microsoft-foundry/code/01_foundry_hosted_agent/src/langchain-rag-agent
+cd 09-deploy-to-microsoft-foundry/code
 python main.py
 ```
 
@@ -208,7 +208,7 @@ If this works locally, your LangChain graph is speaking the same protocol it wil
 
 Deploy with the guided VS Code flow from the quickstart:
 
-1. Open `09-deploy-to-microsoft-foundry/code/01_foundry_hosted_agent` as the active folder in VS Code.
+1. Open `09-deploy-to-microsoft-foundry/code` as the active folder in VS Code.
 2. Open the Command Palette and select **Foundry Toolkit: Deploy Hosted Agent**.
 3. Choose **Code** as the deployment method.
 4. Choose **Remote** as the package mode so Foundry builds dependencies from `requirements.txt`.
@@ -219,34 +219,36 @@ When deployment finishes, open **Hosted Agents (Preview)** in the Foundry Toolki
 
 ---
 
-## Optional: Deploy with Azure Developer CLI
+## Optional: Add Azure Developer CLI Automation Later
 
-If you prefer commands, install the Azure Developer CLI and the agent extension:
+This sample's [`azure.yaml`](./code/azure.yaml) follows the **ContainerAgent** schema used by Microsoft Foundry Toolkit. It is not an Azure Developer CLI project file, so don't run `azd env new` or `azd deploy` directly from `09-deploy-to-microsoft-foundry/code`.
+
+If your team wants repeatable command-line deployment later, install the Azure Developer CLI and the agent extension:
 
 ```bash
 azd ext install azure.ai.agents
 azd auth login
 ```
 
-From the sample project folder, create an `azd` environment and point it at your existing Foundry project:
+Then create a separate azd project wrapper from this source folder. The azd project will generate its own project-level `azure.yaml` while your LangChain source stays in `09-deploy-to-microsoft-foundry/code`:
 
 ```bash
-cd 09-deploy-to-microsoft-foundry/code/01_foundry_hosted_agent
-azd env new langchain-rag-dev
-azd env set AZURE_AI_PROJECT_ENDPOINT "https://<resource>.services.ai.azure.com/api/projects/<project>"
-azd env set FOUNDRY_MODEL_NAME "<your-model-deployment-name>"
+azd ai agent init \
+    --src 09-deploy-to-microsoft-foundry/code \
+    --agent-name langchain-rag-agent \
+    --deploy-mode code \
+    --runtime python_3_13 \
+    --entry-point main.py
 ```
 
-Test locally through `azd`:
+After azd creates the wrapper project, set the Foundry project endpoint and model deployment name in that azd environment, then run the normal local and deploy commands:
 
 ```bash
+azd env set AZURE_AI_PROJECT_ENDPOINT "https://<resource>.services.ai.azure.com/api/projects/<project>"
+azd env set FOUNDRY_PROJECT_ENDPOINT "https://<resource>.services.ai.azure.com/api/projects/<project>"
+azd env set AZURE_AI_MODEL_DEPLOYMENT_NAME "<your-model-deployment-name>"
 azd ai agent run
 azd ai agent invoke --local "When was LangChain created?"
-```
-
-Deploy the hosted agent:
-
-```bash
 azd deploy
 azd ai agent invoke "Explain agentic RAG in one paragraph."
 ```
@@ -261,7 +263,7 @@ azd ai agent invoke "Explain agentic RAG in one paragraph."
 - Foundry Toolkit lets you create a new Foundry project or select an existing one
 - `ResponsesHostServer` exposes the LangChain graph through the Foundry Responses protocol
 - Keep using the course virtual environment locally; Foundry builds hosted dependencies from `requirements.txt`
-- Use `azd` when you want repeatable command-line deployment and invocation
+- Use a separate azd wrapper project if you later want repeatable command-line deployment
 
 ---
 
@@ -270,7 +272,7 @@ azd ai agent invoke "Explain agentic RAG in one paragraph."
 The hosted-agent sample has its own dependency file:
 
 ```bash
-pip install -r 09-deploy-to-microsoft-foundry/code/01_foundry_hosted_agent/src/langchain-rag-agent/requirements.txt
+pip install -r 09-deploy-to-microsoft-foundry/code/requirements.txt
 ```
 
 ---
@@ -281,7 +283,7 @@ For local testing with Foundry, set:
 
 ```bash
 FOUNDRY_PROJECT_ENDPOINT=your-foundry-project-endpoint
-FOUNDRY_MODEL_NAME=your-model-deployment-name
+AZURE_AI_MODEL_DEPLOYMENT_NAME=your-model-deployment-name
 ```
 
 If you run the sample without `FOUNDRY_PROJECT_ENDPOINT`, it falls back to the same local course variables used in earlier chapters:

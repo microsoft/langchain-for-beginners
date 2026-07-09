@@ -70,13 +70,14 @@ def build_chat_model() -> ChatOpenAI:
         openai_client = project.get_openai_client()
         token_provider = get_bearer_token_provider(credential, AZURE_AI_SCOPE)
         deployment = (
-            os.getenv("FOUNDRY_MODEL_NAME")
-            or os.getenv("AZURE_AI_MODEL_DEPLOYMENT_NAME")
+            os.getenv("AZURE_AI_MODEL_DEPLOYMENT_NAME")
             or os.getenv("AI_MODEL")
         )
 
         if not deployment:
-            raise RuntimeError("Set FOUNDRY_MODEL_NAME to your Foundry model deployment name.")
+            raise RuntimeError(
+                "Set AZURE_AI_MODEL_DEPLOYMENT_NAME to your Foundry model deployment name."
+            )
 
         return ChatOpenAI(
             model=deployment,

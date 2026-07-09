@@ -1,0 +1,22 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/microsoft/AgentSchema/refs/heads/main/schemas/v1.0/ContainerAgent.yaml
+kind: hosted
+name: langchain-rag-agent
+displayName: LangChain RAG Agent
+description: Agentic RAG assistant built with LangChain and hosted in Microsoft Foundry.
+
+protocols:
+  - protocol: responses
+    version: 2.0.0
+
+resources:
+  cpu: "0.5"
+  memory: 1Gi
+
+environmentVariables:
+  - name: AZURE_AI_MODEL_DEPLOYMENT_NAME
+    value: ${AZURE_AI_MODEL_DEPLOYMENT_NAME}
+
+codeConfiguration:
+  runtime: python_3_13
+  entryPoint: main.py
+  dependencyResolution: remote_build

@@ -19,7 +19,7 @@ Practice turning a local LangChain agent into a Microsoft Foundry hosted agent. 
 
 **Tasks**:
 
-1. Copy or adapt your Chapter 8 retrieval tool into `09-deploy-to-microsoft-foundry/code/01_foundry_hosted_agent/src/langchain-rag-agent/main.py`
+1. Copy or adapt your Chapter 8 retrieval tool into `09-deploy-to-microsoft-foundry/code/main.py`
 2. Keep the `create_agent()` pattern and update the system prompt for your knowledge base
 3. Configure your Foundry project endpoint and model deployment name
 4. Test the hosted wrapper locally at `http://localhost:8088/responses`
@@ -59,23 +59,24 @@ Keep local secrets out of source control. Use `.env` for local testing and `azd 
 
 ---
 
-## Bonus Challenge: Make Deployment Repeatable
+## Bonus Challenge: Prepare CLI Automation
 
-**Goal**: Use Azure Developer CLI to make the hosted-agent deployment repeatable from the command line.
+**Goal**: Prepare a repeatable command-line deployment path without changing the ContainerAgent YAML used by Foundry Toolkit.
 
 **Tasks**:
 
-1. Run `azd env new` from `09-deploy-to-microsoft-foundry/code/01_foundry_hosted_agent`
-2. Set `AZURE_AI_PROJECT_ENDPOINT` and `FOUNDRY_MODEL_NAME`
-3. Test with `azd ai agent run` and `azd ai agent invoke --local`
-4. Deploy with `azd deploy`
+1. Keep `09-deploy-to-microsoft-foundry/code/azure.yaml` in the ContainerAgent schema format
+2. Create a separate azd wrapper project with `azd ai agent init --src 09-deploy-to-microsoft-foundry/code`
+3. Set `AZURE_AI_PROJECT_ENDPOINT`, `FOUNDRY_PROJECT_ENDPOINT`, and `AZURE_AI_MODEL_DEPLOYMENT_NAME` in the azd environment
+4. Test with `azd ai agent run` and `azd ai agent invoke --local`
 5. Capture the commands your team should run for future deployments
 
 **Success Criteria**:
 
+- `azd` wrapper project contains its own project-level `azure.yaml`
 - `azd` environment contains the correct project endpoint and model name
 - Local invocation works before deployment
-- Hosted invocation works after deployment
+- Hosted deployment path is documented for the team
 - Cleanup plan is clear for any resources created only for this exercise
 
 ---

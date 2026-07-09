@@ -1,4 +1,6 @@
 .env
+.azure/
+.foundry/
 .venv/
 venv/
 __pycache__/
@@ -6,3 +8,4 @@ __pycache__/
 *.pyo
 *.pyd
 *.log
+azure.yaml
