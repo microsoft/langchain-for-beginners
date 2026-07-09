@@ -10,8 +10,6 @@ Then send a non-streaming Responses request to http://localhost:8088/responses.
 import os
 import re
 
-from azure.ai.projects import AIProjectClient
-from azure.identity import DefaultAzureCredential, get_bearer_token_provider
 from dotenv import load_dotenv
 from langchain.agents import create_agent
 from langchain_core.documents import Document
@@ -19,8 +17,6 @@ from langchain_core.tools import tool
 from langchain_openai import ChatOpenAI
 
 from langchain_azure_ai.agents.hosting import ResponsesHostServer
-
-AZURE_AI_SCOPE = "https://ai.azure.com/.default"
 
 load_dotenv()
 
@@ -59,32 +55,6 @@ COURSE_NOTES = [
 
 def build_chat_model() -> ChatOpenAI:
     """Create a chat model for local course runs or Foundry hosted deployment."""
-    foundry_endpoint = os.getenv("FOUNDRY_PROJECT_ENDPOINT")
-
-    if foundry_endpoint:
-        credential = DefaultAzureCredential()
-        project = AIProjectClient(
-            endpoint=foundry_endpoint.rstrip("/"),
-            credential=credential,
-        )
-        openai_client = project.get_openai_client()
-        token_provider = get_bearer_token_provider(credential, AZURE_AI_SCOPE)
-        deployment = (
-            os.getenv("AZURE_AI_MODEL_DEPLOYMENT_NAME")
-            or os.getenv("AI_MODEL")
-        )
-
-        if not deployment:
-            raise RuntimeError(
-                "Set AZURE_AI_MODEL_DEPLOYMENT_NAME to your Foundry model deployment name."
-            )
-
-        return ChatOpenAI(
-            model=deployment,
-            base_url=str(openai_client.base_url),
-            api_key=token_provider,
-        )
-
     return ChatOpenAI(
         model=os.getenv("AI_MODEL"),
         base_url=os.getenv("AI_ENDPOINT"),

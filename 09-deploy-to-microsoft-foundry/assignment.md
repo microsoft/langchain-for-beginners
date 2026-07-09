@@ -52,29 +52,29 @@ def build_agent():
     )
 ```
 
-Keep local secrets out of source control. Use `.env` for local testing and `azd env set` or Foundry Toolkit configuration for deployment values.
+Keep local secrets out of source control. Use `.env` for local testing and Foundry Toolkit configuration for deployment values.
 
 > [!TIP]
 > **🤖 Get help from [GitHub Copilot](../docs/copilot.md):** Open `main.py` and ask Copilot to help you adapt your Chapter 8 retrieval tool for the hosted-agent sample.
 
 ---
 
-## Bonus Challenge: Prepare CLI Automation
+## Bonus Challenge: Document Repeatable Deployment
 
-**Goal**: Prepare a repeatable command-line deployment path without changing the ContainerAgent YAML used by Foundry Toolkit.
+**Goal**: Prepare a repeatable team deployment checklist without changing the ContainerAgent YAML used by Foundry Toolkit.
 
 **Tasks**:
 
 1. Keep `09-deploy-to-microsoft-foundry/code/azure.yaml` in the ContainerAgent schema format
-2. Create a separate azd wrapper project with `azd ai agent init --src 09-deploy-to-microsoft-foundry/code`
-3. Set `AZURE_AI_PROJECT_ENDPOINT`, `FOUNDRY_PROJECT_ENDPOINT`, and `AZURE_AI_MODEL_DEPLOYMENT_NAME` in the azd environment
-4. Test with `azd ai agent run` and `azd ai agent invoke --local`
-5. Capture the commands your team should run for future deployments
+2. Confirm the `code/` folder contains `main.py`, `requirements.txt`, and `azure.yaml`
+3. List the Foundry project endpoint and model deployment name your team should select or configure
+4. Test locally with `python main.py` and a `/responses` request
+5. Capture the Foundry Toolkit deployment choices your team should use for future deployments
 
 **Success Criteria**:
 
-- `azd` wrapper project contains its own project-level `azure.yaml`
-- `azd` environment contains the correct project endpoint and model name
+- The existing `code/azure.yaml` remains a ContainerAgent YAML file
+- The checklist names the correct project endpoint and model deployment
 - Local invocation works before deployment
 - Hosted deployment path is documented for the team
 - Cleanup plan is clear for any resources created only for this exercise

@@ -1,22 +1,43 @@
-# yaml-language-server: $schema=https://raw.githubusercontent.com/microsoft/AgentSchema/refs/heads/main/schemas/v1.0/ContainerAgent.yaml
-kind: hosted
+# yaml-language-server: $schema=https://raw.githubusercontent.com/Azure/azure-dev/main/schemas/v1.0/azure.yaml.json
+
+requiredVersions:
+  extensions:
+    azure.ai.agents: '>=1.0.0-beta.4'
 name: langchain-rag-agent
-displayName: LangChain RAG Agent
-description: Agentic RAG assistant built with LangChain and hosted in Microsoft Foundry.
-
-protocols:
-  - protocol: responses
-    version: 2.0.0
-
-resources:
-  cpu: "0.5"
-  memory: 1Gi
-
-environmentVariables:
-  - name: AZURE_AI_MODEL_DEPLOYMENT_NAME
-    value: ${AZURE_AI_MODEL_DEPLOYMENT_NAME}
-
-codeConfiguration:
-  runtime: python_3_13
-  entryPoint: main.py
-  dependencyResolution: remote_build
+services:
+  langchain-rag-agent:
+    host: azure.ai.agent
+    metadata:
+      tags:
+        - AI Agent Hosting
+        - Responses Protocol
+        - LangChain
+        - Agentic RAG
+        - Python
+    project: .
+    language: python
+    codeConfiguration:
+      runtime: python_3_13
+      entryPoint: main.py
+    kind: hosted
+    name: langchain-rag-agent
+    displayName: LangChain RAG Agent
+    description: Agentic RAG assistant built with LangChain and hosted in Microsoft Foundry.
+    protocols:
+      - protocol: responses
+        version: 2.0.0
+    environmentVariables:
+      - name: AI_API_KEY
+        value: ${AI_API_KEY}
+      - name: AI_ENDPOINT
+        value: ${AI_ENDPOINT}
+      - name: AI_MODEL
+        value: ${AI_MODEL}
+      - name: AI_EMBEDDING_MODEL
+        value: ${AI_EMBEDDING_MODEL}
+    container:
+      resources:
+        cpu: '0.5'
+        memory: 1Gi
+infra:
+  provider: microsoft.foundry
