@@ -269,7 +269,7 @@ azd ai agent invoke "Explain agentic RAG in one paragraph."
 
 ## 📦 Dependencies
 
-The hosted-agent sample has its own dependency file:
+The hosted-agent sample has its own dependency file because Foundry Toolkit uses this folder as the deployment package and installs from `code/requirements.txt` during remote build. It includes the course LangChain packages plus the hosted-agent runtime dependencies needed by `main.py`.
 
 ```bash
 pip install -r 09-deploy-to-microsoft-foundry/code/requirements.txt
