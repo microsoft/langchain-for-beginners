@@ -1,76 +1,68 @@
 # Deploy LangChain Agents to Microsoft Foundry
 
-In this optional chapter, you'll take the LangChain agent you built in [Building Agentic RAG Systems](../08-agentic-rag-systems/README.md) and deploy it to **Microsoft Foundry** as a hosted agent. You have already learned how to build agents that decide when to search documents. Now you'll learn how to host that agent so it can run in a managed cloud environment with a stable endpoint, deployment history, and Foundry tooling.
+In this optional chapter, you'll take the LangChain agent you built in [Building Agentic RAG Systems](../08-agentic-rag-systems/README.md) and deploy it to **Microsoft Foundry** as a hosted agent. You'll keep the same `create_agent()` pattern, add keyless authentication, test the hosting protocol locally, and deploy the code to an existing Foundry project.
 
-This chapter follows the [Microsoft Foundry hosted agent quickstart](https://learn.microsoft.com/azure/foundry/agents/quickstarts/quickstart-hosted-agent?pivots=vscode), with one course-specific goal: keep your LangChain `create_agent()` logic and wrap it for Foundry hosting.
+This chapter follows the [Microsoft Foundry hosted agent quickstart](https://learn.microsoft.com/azure/foundry/agents/quickstarts/quickstart-hosted-agent?pivots=vscode). It assumes you already have a Foundry project and model deployment. If you don't, use the quickstart or Foundry Toolkit to create them, then return to Step 2.
 
 ## Prerequisites
 
 - Completed [Building Agentic RAG Systems](../08-agentic-rag-systems/README.md)
 - Completed the local setup in [Course Setup](../00-course-setup/README.md)
-- VS Code with the [Microsoft Foundry Toolkit](https://aka.ms/foundrytk)
-- Azure subscription access
-- Python 3.13 or later for source-code hosted agent deployment
 - A Foundry project with a deployed chat model, such as `gpt-4.1` or `gpt-5-mini`
+- **Foundry Project Manager** access on that project for hosted-agent deployment
+- Python 3.13 or later for source-code hosted agent deployment
+- [Azure CLI](https://learn.microsoft.com/cli/azure/install-azure-cli) for local authentication
+- [Azure Developer CLI](https://learn.microsoft.com/azure/developer/azure-developer-cli/install-azd) with the `azure.ai.agents` extension
+- Optional: VS Code with the [Microsoft Foundry Toolkit](https://aka.ms/foundrytk) for guided deployment
 
-> **📝 Note**: The Microsoft quickstart shows how to create a new Foundry project. If your team already has one, you can select that existing Foundry project in VS Code instead. You need **Foundry Project Manager** access on the project.
+> **Authentication**: This chapter uses two sign-in commands for different tools. `az login` authenticates the local Python application in Step 4, while `azd auth login` authenticates the deployment CLI in Step 5.
 
 ## 🎯 Learning Objectives
 
 By the end of this chapter, you'll be able to:
 
 - ✅ Explain what a Microsoft Foundry hosted agent provides
-- ✅ Prepare a LangChain `create_agent()` graph for hosted deployment
-- ✅ Configure a Foundry project and model deployment for your agent
-- ✅ Test the hosted-agent wrapper locally
-- ✅ Deploy the agent from VS Code with Microsoft Foundry Toolkit
-- ✅ Understand how the hosted-agent YAML maps to the ContainerAgent schema
+- ✅ Wrap a LangChain `create_agent()` graph for hosted deployment
+- ✅ Authenticate without storing an API key
+- ✅ Configure and test the hosted agent locally
+- ✅ Deploy directly to an existing Foundry project with `azd`
+- ✅ Verify and troubleshoot the deployment
 
 ---
 
-## 📌 About the Code Example
+## 📌 What You'll Build
 
-The sample project in this chapter is intentionally small. It uses a few in-memory course notes instead of a full vector store so you can focus on the hosting pattern first.
+The sample uses a few in-memory course notes instead of a vector store so the deployment pattern stays visible. Microsoft Foundry provides the managed runtime, hosted endpoint, deployment history, logs, and a dedicated identity for the deployed agent.
 
-The same pattern works with the vector store and retrieval tools you built in Chapter 8:
-
-1. Keep your LangChain model setup, tools, and system prompt.
-2. Build the agent with `create_agent()`.
-3. Wrap that graph with the Foundry Responses host.
-4. Deploy the project with Foundry Toolkit.
-
----
-
-## 🚀 Why Deploy to Microsoft Foundry?
-
-Running locally is perfect while you're learning and iterating. Hosting is the next step when you want other people or applications to use your agent reliably.
-
-Microsoft Foundry hosted agents give you:
-
-- A managed runtime for your agent code
-- A stable hosted endpoint
-- Conversation sessions and Foundry agent tooling
-- Deployment history and cloud logs
-- Integration with Foundry projects, model deployments, and identity
-
-Think of this chapter as the bridge from "I built a LangChain agent" to "my team can call this agent from a real application."
-
----
-
-## 💻 Example: Host a LangChain Agentic RAG Agent
-
-The sample project is here:
+The chapter files are:
 
 - **Project**: [`code/`](./code/)
 - **Code**: [`code/main.py`](./code/main.py)
 - **Hosted agent config**: [`code/azure.yaml`](./code/azure.yaml)
 - **Dependencies**: [`code/requirements.txt`](./code/requirements.txt)
+- **Environment template**: [`code/.env.example`](./code/.env.example)
 
-**Key code you'll work with:**
+The important hosting and authentication code is:
 
 ```python
+import os
+
+from azure.identity import DefaultAzureCredential, get_bearer_token_provider
 from langchain.agents import create_agent
+from langchain_openai import ChatOpenAI
 from langchain_azure_ai.agents.hosting import ResponsesHostServer
+
+
+def build_chat_model():
+    token_provider = get_bearer_token_provider(
+        DefaultAzureCredential(),
+        "https://ai.azure.com/.default",
+    )
+    return ChatOpenAI(
+        model=os.getenv("AI_MODEL"),
+        base_url=os.getenv("AI_ENDPOINT"),
+        api_key=token_provider,
+    )
 
 
 def build_agent():
@@ -81,14 +73,11 @@ def build_agent():
     )
 
 
+port = int(os.getenv("PORT", "8088"))
 ResponsesHostServer(build_agent()).run(port=port)
 ```
 
-`create_agent()` gives you the same LangChain pattern from Chapter 8. `ResponsesHostServer` exposes that graph through the Foundry Hosted Agent Responses protocol at `/responses`.
-
-> **🤖 Try with [GitHub Copilot](../docs/copilot.md) Chat:** Want to adapt your Chapter 8 agent? Open the sample `main.py` and ask Copilot:
-> - "Replace the in-memory course notes with the vector store from Chapter 8."
-> - "Explain how ResponsesHostServer changes the way this LangChain agent is served."
+`ChatOpenAI` accepts the token provider through its OpenAI-compatible `api_key` parameter, but the callable returns short-lived Microsoft Entra tokens rather than a stored API key. `ResponsesHostServer` exposes `/responses` using the protocol Foundry uses to send input to the agent and receive its output.
 
 ---
 
@@ -96,52 +85,42 @@ ResponsesHostServer(build_agent()).run(port=port)
 
 Open [`main.py`](./code/main.py) and find `search_course_notes`. This tool is intentionally small so you can focus on deployment first.
 
-To deploy your own agentic RAG system, replace `COURSE_NOTES` and `search_course_notes` with the vector store and retrieval tool you built in Chapter 8.
-
-The hosting pattern stays the same:
-
-```python
-def build_agent():
-    return create_agent(
-        build_chat_model(),
-        tools=[search_course_notes],
-        system_prompt="You are a helpful agentic RAG assistant...",
-    )
-```
-
-Your agent can keep using LangChain tools, document metadata, retrieval logic, and system prompts. The only new responsibility is starting a host server that Foundry can call.
+Run the sample unchanged first. After it works, you can replace `COURSE_NOTES` and `search_course_notes` with the vector store and retrieval tool from Chapter 8. Your tools, document metadata, retrieval logic, and system prompt can change without changing `build_chat_model()` or the `ResponsesHostServer` wrapper.
 
 ---
 
 ## Step 2: Configure Your Foundry Project
 
-In VS Code, open the Command Palette (**Ctrl+Shift+P**) and use the Foundry Toolkit flow from the quickstart:
+Open your project in the Foundry portal. From the project overview and deployment pages, collect these values:
 
-1. Select **Foundry Toolkit: Create Project** if you need a new Foundry project, or select your existing project in the Foundry Toolkit explorer.
-2. Select **Foundry Toolkit: Open Model Catalog** and deploy a chat model if your project doesn't already have one.
-3. Copy the OpenAI-compatible endpoint for your Foundry resource. It looks like:
+| Value | Variable | Example | Used by |
+| --- | --- | --- | --- |
+| Project endpoint | `FOUNDRY_PROJECT_ENDPOINT` | `https://<resource>.services.ai.azure.com/api/projects/<project>` | `azd` when selecting the deployment target |
+| Project resource ID | `AZURE_AI_PROJECT_ID` | `/subscriptions/<subscription-id>/resourceGroups/<resource-group>/providers/Microsoft.CognitiveServices/accounts/<resource>/projects/<project>` | `azd` when identifying the existing project |
+| Azure region | `AZURE_LOCATION` | `swedencentral` | `azd` when building and deploying the agent code |
+| Model inference endpoint | `AI_ENDPOINT` | `https://<resource>.services.ai.azure.com/api/projects/<project>/openai/v1` | The running agent when calling the model |
+| Chat deployment name | `AI_MODEL` | `gpt-4.1` | `ChatOpenAI`; use the deployment name, not the model catalog ID |
+| Embedding deployment name | `AI_EMBEDDING_MODEL` | `text-embedding-3-small` | Your Chapter 8 vector-store adaptation |
 
-   ```text
-    https://<resource>.services.ai.azure.com/openai/v1
-   ```
+`AI_ENDPOINT` is the project endpoint with `/openai/v1` appended. Do not use the inference endpoint as `FOUNDRY_PROJECT_ENDPOINT`.
 
-4. Copy the chat model deployment name and embedding model deployment name, for example `gpt-4.1` and `text-embedding-3-small`.
+The project resource ID is the full Azure Resource Manager ID, not the project endpoint or project name. You can copy it from the project's JSON view in the Azure portal. Use the region of the parent Foundry resource for `AZURE_LOCATION`.
 
-For local testing, add these non-secret values to your shell or to a local `.env` file inside `code/`:
+Copy [`code/.env.example`](./code/.env.example) to a local `.env` file inside `code/`, then replace the placeholders. The local application does not need the three azd deployment values; you will store them in the azd environment in Step 5.
 
 ```bash
-AI_ENDPOINT=https://<resource>.services.ai.azure.com/openai/v1
+AI_ENDPOINT=https://<resource>.services.ai.azure.com/api/projects/<project>/openai/v1
 AI_MODEL=<your-chat-model-deployment-name>
 AI_EMBEDDING_MODEL=<your-embedding-model-deployment-name>
 ```
 
-Do not add `AI_API_KEY`. The sample uses `DefaultAzureCredential` to request short-lived Microsoft Entra tokens instead of placing a long-lived shared secret in `.env` or the hosted deployment. Locally, `DefaultAzureCredential` uses your Azure CLI sign-in. When deployed, Foundry creates a dedicated Microsoft Entra identity for the hosted agent and the same code uses that identity without any credential changes.
+The current in-memory search does not call the embedding model, but the variable is ready for the Chapter 8 adaptation. The repository ignores `.env`, and it should contain only these non-secret values.
 
-The sample [`azure.yaml`](./code/azure.yaml) follows the ContainerAgent schema and passes only `AI_ENDPOINT`, `AI_MODEL`, and `AI_EMBEDDING_MODEL` into the hosted runtime. The code reads those same non-secret variable names for local testing and Foundry hosting.
+Do not add `AI_API_KEY`. `DefaultAzureCredential` uses your Azure CLI identity locally and the dedicated Microsoft Entra agent identity after deployment. Foundry grants the hosted identity access to model inference through its project endpoint, so the code does not need separate production credentials.
 
 ---
 
-## Step 3: Install Optional Hosted-Agent Dependencies
+## Step 3: Install Hosted-Agent Dependencies
 
 Use the same virtual environment style from [Course Setup](../00-course-setup/README.md). From the repository root, activate your existing course environment and install the hosted-agent sample requirements.
 
@@ -169,7 +148,10 @@ Sign in with Azure CLI so `DefaultAzureCredential` can access your Foundry proje
 
 ```bash
 az login
+az account show --output table
 ```
+
+If you have access to more than one tenant or subscription, make sure the displayed account contains the Foundry project.
 
 Then run the host from the source folder:
 
@@ -209,86 +191,97 @@ curl -sS -H "Content-Type: application/json" \
     -d '{"input":"When was LangChain created?","stream":false}'
 ```
 
-If this works locally, your LangChain graph is speaking the same protocol it will use in Foundry.
+If the response says LangChain was created in 2022, both model authentication and the hosted Responses wrapper are working. Press **Ctrl+C** in the server terminal when you finish the local test.
 
 ---
 
-## Step 5: Deploy with Foundry Toolkit
+## Step 5: Deploy to an Existing Foundry Project with `azd`
 
-Deploy with the guided VS Code flow from the quickstart:
+The [`code/`](./code/) folder is already an azd hosted-agent project. `AI_ENDPOINT` configures the running agent, but it does not tell `azd` where to deploy. For direct code deployment, azd separately requires the project endpoint, full resource ID, and Azure region collected in Step 2.
 
-1. Open `09-deploy-to-microsoft-foundry/code` as the active folder in VS Code.
-2. Open the Command Palette and select **Foundry Toolkit: Deploy Hosted Agent**.
-3. Choose **Code** as the deployment method.
-4. Choose **Remote** as the package mode so Foundry builds dependencies from `requirements.txt`.
-5. Confirm the agent name, project, API version, model deployment, and review page.
-6. Select **Deploy**.
+> **Existing project**: Do not run `azd provision` when the Foundry project and model deployments already exist. `azd provision` intentionally creates or updates Azure infrastructure; the steps below bind `azd deploy` directly to your existing project.
 
-When deployment finishes, open **Hosted Agents (Preview)** in the Foundry Toolkit explorer, select your agent, and use the **Playground** tab to ask the same test question.
-
----
-
-## Optional: Add Azure Developer CLI Automation Later
-
-This sample's [`azure.yaml`](./code/azure.yaml) follows the **ContainerAgent** schema used by Microsoft Foundry Toolkit. It is not an Azure Developer CLI project file, so don't run `azd env new` or `azd deploy` directly from `09-deploy-to-microsoft-foundry/code`.
-
-Because the [`code/`](./code/) folder already contains the hosted-agent source and ContainerAgent YAML, you don't need to generate another azd agent scaffold for this chapter. Use the Foundry Toolkit deployment flow in Step 5 directly from `09-deploy-to-microsoft-foundry/code`.
-
-If your team wants repeatable command-line deployment later, treat that as a separate automation project outside this tutorial folder. Install the Azure Developer CLI and the agent extension there, then follow the Azure Developer CLI hosted-agent documentation for creating a wrapper project around this existing source folder:
+Install the agent extension, sign in, and create a local azd environment:
 
 ```bash
+cd 09-deploy-to-microsoft-foundry/code
 azd ext install azure.ai.agents
 azd auth login
+azd env new <environment-name>
 ```
 
-In that separate azd wrapper project, set the OpenAI-compatible endpoint, chat model, and embedding model in the azd environment. Authentication still comes from `DefaultAzureCredential`: use your Azure sign-in locally and the hosted agent identity after deployment. Then use the normal local and deploy commands from the wrapper project root:
+If the environment already exists, select it instead:
 
 ```bash
-azd env set AI_ENDPOINT "https://<resource>.services.ai.azure.com/openai/v1"
-azd env set AI_MODEL "<your-model-deployment-name>"
-azd env set AI_EMBEDDING_MODEL "<your-embedding-model-deployment-name>"
+azd env select <environment-name>
+```
 
-azd ai agent run
-azd ai agent invoke --local "When was LangChain created?"
-azd deploy
+Set the three deployment values from Step 2, followed by the runtime values from your `.env` file. Keep `/openai/v1` off `FOUNDRY_PROJECT_ENDPOINT`, and include the complete project resource ID in `AZURE_AI_PROJECT_ID`:
+
+```bash
+azd env set FOUNDRY_PROJECT_ENDPOINT "https://<resource>.services.ai.azure.com/api/projects/<project>"
+azd env set AZURE_AI_PROJECT_ID "/subscriptions/<subscription-id>/resourceGroups/<resource-group>/providers/Microsoft.CognitiveServices/accounts/<resource>/projects/<project>"
+azd env set AZURE_LOCATION "<project-region>"
+azd env set AI_ENDPOINT "https://<resource>.services.ai.azure.com/api/projects/<project>/openai/v1"
+azd env set AI_MODEL "<your-chat-model-deployment-name>"
+azd env set AI_EMBEDDING_MODEL "<your-embedding-model-deployment-name>"
+```
+
+Verify that azd resolves the intended project before deploying:
+
+```bash
+azd ai project show --output json
+azd env get-values
+```
+
+Check that `azd ai project show` prints the intended project endpoint without `/openai/v1`. In `azd env get-values`, confirm that `AZURE_AI_PROJECT_ID` is the complete project resource ID and `AZURE_LOCATION` is the project's region. Then deploy the source directly. Because `codeConfiguration` is present in `azure.yaml`, Foundry performs a remote build from `requirements.txt`:
+
+```bash
+azd deploy --no-prompt
+azd ai agent show --output json
 azd ai agent invoke "Explain agentic RAG in one paragraph."
 ```
 
-> **⚠️ Cleanup**: Deployed hosted agents and model calls can incur Azure charges. If you created a new resource group just for this optional chapter, delete it from the Azure portal or run `azd down` from the hosted-agent project after you confirm it contains only resources you want to remove.
+A successful deployment creates an immutable agent version. `azd ai agent show` should report an `active` or `deployed` status and list the Responses endpoint.
+
+---
+
+## Step 6: Alternative Guided Deployment with Foundry Toolkit
+
+To deploy from VS Code instead of the CLI:
+
+1. Open `09-deploy-to-microsoft-foundry/code` as the active folder.
+2. Run **Foundry Toolkit: Deploy Hosted Agent** from the Command Palette.
+3. Choose **Code** and then **Remote** so Foundry installs `requirements.txt` during the build.
+4. Select the existing Foundry project, confirm the agent settings, and deploy.
+5. Open **Hosted Agents (Preview)** and test the deployed agent in the **Playground**.
+
+> **⚠️ Cleanup**: Hosted agents and model calls can incur Azure charges. Delete agents and resources that you created only for this exercise when you finish.
+
+---
+
+## 🔧 Troubleshooting
+
+| Problem | What to check |
+| --- | --- |
+| `no Foundry project endpoint resolved` | Select the intended azd environment and set `FOUNDRY_PROJECT_ENDPOINT` without `/openai/v1`. |
+| `Microsoft Foundry project ID is required` | Set `AZURE_AI_PROJECT_ID` to the project's full Azure Resource Manager ID, beginning with `/subscriptions/`. |
+| `AZURE_LOCATION is not set` | Set `AZURE_LOCATION` to the Azure region of the existing Foundry resource, such as `swedencentral`. |
+| `DefaultAzureCredential` fails locally | Run `az login`, verify `az account show`, and confirm that your account can access the project. |
+| Model request returns `401` or `403` | Confirm your user can invoke the deployed model. The hosted agent uses its Foundry-provided identity, but your local test uses your own identity. |
+| `DeploymentNotFound` or `ResourceNotFound` | Check that `AI_MODEL` is the deployment name and that `AI_ENDPOINT` belongs to the same project. |
+| Local request reports connection refused | Keep `python main.py` running and confirm that port `8088` is available. |
+| A new deployment is temporarily not ready | Wait for `azd ai agent show` to report `active` or `deployed`, then invoke it again. |
 
 ---
 
 ## 🎓 Key Takeaways
 
 - You can deploy a LangChain `create_agent()` graph to Microsoft Foundry as a hosted agent
-- Foundry Toolkit lets you create a new Foundry project or select an existing one
-- `ResponsesHostServer` exposes the LangChain graph through the Foundry Responses protocol
-- Keep using the course virtual environment locally; Foundry builds hosted dependencies from `requirements.txt`
-- Use Foundry Toolkit directly with the existing `code/` folder; create separate azd automation only if your team needs it later
-
----
-
-## 📦 Dependencies
-
-The hosted-agent sample has its own dependency file because Foundry Toolkit uses this folder as the deployment package and installs from `code/requirements.txt` during remote build. It includes the course LangChain packages plus the hosted-agent runtime dependencies needed by `main.py`.
-
-```bash
-pip install -r 09-deploy-to-microsoft-foundry/code/requirements.txt
-```
-
----
-
-## 🔧 Environment Variables
-
-For local testing with Foundry, set only the non-secret model configuration:
-
-```bash
-AI_ENDPOINT=your-openai-compatible-endpoint
-AI_MODEL=your-chat-model-deployment-name
-AI_EMBEDDING_MODEL=your-embedding-model-deployment-name
-```
-
-Authentication is handled by `DefaultAzureCredential`, so no API key environment variable is required. Run `az login` before local testing; the deployed agent uses its Foundry-provided Microsoft Entra identity.
+- `ResponsesHostServer` exposes the graph through the Foundry Responses protocol
+- `DefaultAzureCredential` switches from your local Azure identity to the hosted agent identity without storing an API key
+- `FOUNDRY_PROJECT_ENDPOINT`, `AZURE_AI_PROJECT_ID`, and `AZURE_LOCATION` identify the deployment target, while `AI_ENDPOINT` is used for model inference
+- Existing projects can be targeted with `azd deploy` without running `azd provision`
 
 ---
 
