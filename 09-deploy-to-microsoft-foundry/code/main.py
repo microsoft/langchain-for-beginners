@@ -77,8 +77,7 @@ def build_chat_model() -> ChatOpenAI:
 
 def build_embeddings_model() -> OpenAIEmbeddings:
     """Create an embedding model using the Foundry endpoint and identity."""
-    project_hostname = urlparse(os.getenv("AI_ENDPOINT", "")).hostname or ""
-    resource_name = project_hostname.removesuffix(".services.ai.azure.com")
+
     token_provider = get_bearer_token_provider(
         DefaultAzureCredential(),
         "https://ai.azure.com/.default",
@@ -86,7 +85,7 @@ def build_embeddings_model() -> OpenAIEmbeddings:
 
     return OpenAIEmbeddings(
         model=os.getenv("AI_EMBEDDING_MODEL", "text-embedding-3-small"),
-        base_url=f"https://{resource_name}.openai.azure.com/openai/v1",
+        base_url=os.getenv("AI_ENDPOINT"),
         api_key=token_provider,
     )
 
