@@ -125,18 +125,19 @@ In VS Code, open the Command Palette (**Ctrl+Shift+P**) and use the Foundry Tool
     https://<resource>.services.ai.azure.com/openai/v1
    ```
 
-4. Copy the API key, chat model deployment name, and embedding model deployment name, for example `gpt-4.1` and `text-embedding-3-small`.
+4. Copy the chat model deployment name and embedding model deployment name, for example `gpt-4.1` and `text-embedding-3-small`.
 
-For local testing, add these values to your shell or to a local `.env` file inside `code/`:
+For local testing, add these non-secret values to your shell or to a local `.env` file inside `code/`:
 
 ```bash
-AI_API_KEY=<your-api-key>
 AI_ENDPOINT=https://<resource>.services.ai.azure.com/openai/v1
 AI_MODEL=<your-chat-model-deployment-name>
 AI_EMBEDDING_MODEL=<your-embedding-model-deployment-name>
 ```
 
-When the agent runs in Foundry, the sample [`azure.yaml`](./code/azure.yaml) follows the ContainerAgent schema and passes `AI_API_KEY`, `AI_ENDPOINT`, `AI_MODEL`, and `AI_EMBEDDING_MODEL` into the hosted runtime. The code reads those same variable names for local testing and Foundry hosting.
+Do not add `AI_API_KEY`. The sample uses `DefaultAzureCredential` to request short-lived Microsoft Entra tokens instead of placing a long-lived shared secret in `.env` or the hosted deployment. Locally, `DefaultAzureCredential` uses your Azure CLI sign-in. When deployed, Foundry creates a dedicated Microsoft Entra identity for the hosted agent and the same code uses that identity without any credential changes.
+
+The sample [`azure.yaml`](./code/azure.yaml) follows the ContainerAgent schema and passes only `AI_ENDPOINT`, `AI_MODEL`, and `AI_EMBEDDING_MODEL` into the hosted runtime. The code reads those same non-secret variable names for local testing and Foundry hosting.
 
 ---
 
@@ -240,10 +241,9 @@ azd ext install azure.ai.agents
 azd auth login
 ```
 
-In that separate azd wrapper project, set the API key, OpenAI-compatible endpoint, chat model, and embedding model in the azd environment, then use the normal local and deploy commands from the wrapper project root:
+In that separate azd wrapper project, set the OpenAI-compatible endpoint, chat model, and embedding model in the azd environment. Authentication still comes from `DefaultAzureCredential`: use your Azure sign-in locally and the hosted agent identity after deployment. Then use the normal local and deploy commands from the wrapper project root:
 
 ```bash
-azd env set AI_API_KEY "<your-api-key>"
 azd env set AI_ENDPOINT "https://<resource>.services.ai.azure.com/openai/v1"
 azd env set AI_MODEL "<your-model-deployment-name>"
 azd env set AI_EMBEDDING_MODEL "<your-embedding-model-deployment-name>"
@@ -280,14 +280,15 @@ pip install -r 09-deploy-to-microsoft-foundry/code/requirements.txt
 
 ## 🔧 Environment Variables
 
-For local testing with Foundry, set:
+For local testing with Foundry, set only the non-secret model configuration:
 
 ```bash
-AI_API_KEY=your-api-key
 AI_ENDPOINT=your-openai-compatible-endpoint
 AI_MODEL=your-chat-model-deployment-name
 AI_EMBEDDING_MODEL=your-embedding-model-deployment-name
 ```
+
+Authentication is handled by `DefaultAzureCredential`, so no API key environment variable is required. Run `az login` before local testing; the deployed agent uses its Foundry-provided Microsoft Entra identity.
 
 ---
 

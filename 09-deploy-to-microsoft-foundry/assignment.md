@@ -52,7 +52,7 @@ def build_agent():
     )
 ```
 
-Keep local secrets out of source control. Use `.env` for local testing and Foundry Toolkit configuration for deployment values.
+Do not add an API key to `.env` or the deployment configuration. Keep only non-secret endpoint and model names in `.env`, run `az login` for local testing, and let `DefaultAzureCredential` use the Foundry-provided agent identity after deployment.
 
 > [!TIP]
 > **🤖 Get help from [GitHub Copilot](../docs/copilot.md):** Open `main.py` and ask Copilot to help you adapt your Chapter 8 retrieval tool for the hosted-agent sample.

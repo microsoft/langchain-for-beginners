@@ -27,8 +27,6 @@ services:
       - protocol: responses
         version: 2.0.0
     environmentVariables:
-      - name: AI_API_KEY
-        value: ${AI_API_KEY}
       - name: AI_ENDPOINT
         value: ${AI_ENDPOINT}
       - name: AI_MODEL
