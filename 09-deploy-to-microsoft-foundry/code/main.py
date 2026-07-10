@@ -8,14 +8,15 @@ Then send a non-streaming Responses request to http://localhost:8088/responses.
 """
 
 import os
-import re
+from urllib.parse import urlparse
 
 from azure.identity import DefaultAzureCredential, get_bearer_token_provider
 from dotenv import load_dotenv
 from langchain.agents import create_agent
 from langchain_core.documents import Document
 from langchain_core.tools import tool
-from langchain_openai import ChatOpenAI
+from langchain_core.vectorstores import InMemoryVectorStore
+from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 
 from langchain_azure_ai.agents.hosting import ResponsesHostServer
 
@@ -70,39 +71,41 @@ def build_chat_model() -> ChatOpenAI:
         model=os.getenv("AI_MODEL"),
         base_url=os.getenv("AI_ENDPOINT"),
         api_key=token_provider,
-        use_responses_api=True
+        use_responses_api=True,
     )
 
 
-def score_document(query: str, document: Document) -> int:
-    """Simple keyword scoring used only to keep the hosting sample compact."""
-    terms = set(re.findall(r"[a-z0-9]+", query.lower()))
-    haystack = " ".join(
-        [document.page_content, *[str(value) for value in document.metadata.values()]]
-    ).lower()
-    return sum(1 for term in terms if term in haystack)
-
-
-@tool
-def search_course_notes(query: str) -> str:
-    """Search course notes about LangChain, RAG, agentic RAG, and vector stores. Use this when you need course-specific information."""
-    ranked_documents = sorted(
-        COURSE_NOTES,
-        key=lambda document: score_document(query, document),
-        reverse=True,
+def build_embeddings_model() -> OpenAIEmbeddings:
+    """Create an embedding model using the Foundry endpoint and identity."""
+    project_hostname = urlparse(os.getenv("AI_ENDPOINT", "")).hostname or ""
+    resource_name = project_hostname.removesuffix(".services.ai.azure.com")
+    token_provider = get_bearer_token_provider(
+        DefaultAzureCredential(),
+        "https://ai.azure.com/.default",
     )
-    top_documents = ranked_documents[:3]
 
-    if not any(score_document(query, document) for document in top_documents):
-        return "No matching course notes found."
-
-    return "\n\n".join(
-        f"[{document.metadata['source']}]: {document.page_content}"
-        for document in top_documents
+    return OpenAIEmbeddings(
+        model=os.getenv("AI_EMBEDDING_MODEL", "text-embedding-3-small"),
+        base_url=f"https://{resource_name}.openai.azure.com/openai/v1",
+        api_key=token_provider,
     )
 
 
 def build_agent():
+    vector_store = InMemoryVectorStore.from_documents(
+        COURSE_NOTES,
+        build_embeddings_model(),
+    )
+
+    @tool
+    def search_course_notes(query: str) -> str:
+        """Search course notes about LangChain, RAG, agentic RAG, and vector stores. Use this when you need course-specific information."""
+        results = vector_store.similarity_search(query, k=3)
+        return "\n\n".join(
+            f"[{document.metadata['source']}]: {document.page_content}"
+            for document in results
+        )
+
     return create_agent(
         build_chat_model(),
         tools=[search_course_notes],
