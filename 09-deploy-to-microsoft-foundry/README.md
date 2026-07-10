@@ -247,12 +247,14 @@ If the environment already exists, select it instead:
 azd env select langchain-course # Or name of your existing environment
 ```
 
-Set the three deployment values from Step 2, followed by the runtime values from your `.env` file. Keep `/openai/v1` off `FOUNDRY_PROJECT_ENDPOINT`, and include the complete project resource ID in `AZURE_AI_PROJECT_ID`:
+Set the three deployment values from Step 2 in the active azd environment, followed by the runtime values from your `.env` file. Keep `/openai/v1` off `FOUNDRY_PROJECT_ENDPOINT`, and include the complete project resource ID in `AZURE_AI_PROJECT_ID`:
 
 ```bash
-azd ai project set https://<resource>.services.ai.azure.com/api/projects/<project>
+azd env set FOUNDRY_PROJECT_ENDPOINT "https://<resource>.services.ai.azure.com/api/projects/<project>"
+azd env set AZURE_AI_PROJECT_ID "/subscriptions/<subscription-id>/resourceGroups/<resource-group>/providers/Microsoft.CognitiveServices/accounts/<resource>/projects/<project>"
+azd env set AZURE_LOCATION "<azure-region>"
 
-azd env set AI_ENDPOINT "https://<resource>.services.ai.azure.com/api/projects/<project>/openai/v1"
+azd env set AI_ENDPOINT "https://<resource>.services.ai.azure.com/openai/v1"
 azd env set AI_MODEL "<your-chat-model-deployment-name>"
 azd env set AI_EMBEDDING_MODEL "<your-embedding-model-deployment-name>"
 ```
@@ -264,7 +266,7 @@ azd ai project show --output json
 azd env get-values
 ```
 
-Check that `azd ai project show` prints the intended project endpoint without `/openai/v1`. In `azd env get-values`, confirm that `AZURE_AI_PROJECT_ID` is the complete project resource ID and `AZURE_LOCATION` is the project's region. Then deploy the source directly. Because `codeConfiguration` is present in `azure.yaml`, Foundry performs a remote build from `requirements.txt`:
+Check that `azd ai project show` prints the intended project endpoint without `/openai/v1` and resolves it from the active azd environment rather than the global config. In `azd env get-values`, confirm that `FOUNDRY_PROJECT_ENDPOINT`, `AZURE_AI_PROJECT_ID`, and `AZURE_LOCATION` are all set. Then deploy the source directly. Because `codeConfiguration` is present in `azure.yaml`, Foundry performs a remote build from `requirements.txt`:
 
 ```bash
 azd deploy --no-prompt
@@ -292,17 +294,18 @@ To deploy from VS Code instead of the CLI:
 
 ## 🔧 Troubleshooting
 
-| Problem                                    | What to check                                                                                                                                     |
-| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `no Foundry project endpoint resolved`     | Select the intended azd environment and set `FOUNDRY_PROJECT_ENDPOINT` without `/openai/v1`.                                                      |
-| `Microsoft Foundry project ID is required` | Set `AZURE_AI_PROJECT_ID` to the project's full Azure Resource Manager ID, beginning with `/subscriptions/`.                                      |
-| `AZURE_LOCATION is not set`                | Set `AZURE_LOCATION` to the Azure region of the existing Foundry resource, such as `swedencentral`.                                               |
-| `DefaultAzureCredential` fails locally     | Run `az login`, verify `az account show`, and confirm that your account can access the project.                                                   |
-| Model request returns `401` or `403`       | Confirm your user can invoke the deployed model. The hosted agent uses its Foundry-provided identity, but your local test uses your own identity. |
-| `DeploymentNotFound` or `ResourceNotFound` | Check that `AI_MODEL` and `AI_EMBEDDING_MODEL` are deployment names and that `AI_ENDPOINT` belongs to the same project.                          |
-| Embedding request returns `404`             | Keep `AI_ENDPOINT` as the project `/openai/v1` endpoint; the sample derives the resource-level `.openai.azure.com` endpoint because the project endpoint does not directly route `/embeddings`. |
-| Local request reports connection refused   | Keep `python main.py` running and confirm that port `8088` is available.                                                                          |
-| A new deployment is temporarily not ready  | Wait for `azd ai agent show` to report `active` or `deployed`, then invoke it again.                                                              |
+| Problem                                    | What to check                                                                                                                                                                                   |
+| ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `azd deploy` asks for `azd provision`      | For an existing project, set `FOUNDRY_PROJECT_ENDPOINT`, `AZURE_AI_PROJECT_ID`, and `AZURE_LOCATION` in the active azd environment. `azd ai project set` only sets a global default.            |
+| `no Foundry project endpoint resolved`     | Select the intended azd environment and set `FOUNDRY_PROJECT_ENDPOINT` without `/openai/v1`.                                                                                                    |
+| `Microsoft Foundry project ID is required` | Set `AZURE_AI_PROJECT_ID` to the project's full Azure Resource Manager ID, beginning with `/subscriptions/`.                                                                                    |
+| `AZURE_LOCATION is not set`                | Set `AZURE_LOCATION` to the Azure region of the existing Foundry resource, such as `swedencentral`.                                                                                             |
+| `DefaultAzureCredential` fails locally     | Run `az login`, verify `az account show`, and confirm that your account can access the project.                                                                                                 |
+| Model request returns `401` or `403`       | Confirm your user can invoke the deployed model. The hosted agent uses its Foundry-provided identity, but your local test uses your own identity.                                               |
+| `DeploymentNotFound` or `ResourceNotFound` | Check that `AI_MODEL` and `AI_EMBEDDING_MODEL` are deployment names and that `AI_ENDPOINT` belongs to the same project.                                                                         |
+| Embedding request returns `404`            | Keep `AI_ENDPOINT` as the project `/openai/v1` endpoint; the sample derives the resource-level `.openai.azure.com` endpoint because the project endpoint does not directly route `/embeddings`. |
+| Local request reports connection refused   | Keep `python main.py` running and confirm that port `8088` is available.                                                                                                                        |
+| A new deployment is temporarily not ready  | Wait for `azd ai agent show` to report `active` or `deployed`, then invoke it again.                                                                                                            |
 
 ---
 
