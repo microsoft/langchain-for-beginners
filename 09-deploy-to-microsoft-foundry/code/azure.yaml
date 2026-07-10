@@ -2,7 +2,7 @@
 
 requiredVersions:
   extensions:
-    azure.ai.agents: '>=1.0.0-beta.4'
+    azure.ai.agents: ">=1.0.0-beta.4"
 name: langchain-rag-agent
 services:
   langchain-rag-agent:
@@ -35,7 +35,7 @@ services:
         value: ${AI_EMBEDDING_MODEL}
     container:
       resources:
-        cpu: '0.5'
+        cpu: "0.5"
         memory: 1Gi
 infra:
   provider: microsoft.foundry

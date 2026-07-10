@@ -70,6 +70,7 @@ def build_chat_model() -> ChatOpenAI:
         model=os.getenv("AI_MODEL"),
         base_url=os.getenv("AI_ENDPOINT"),
         api_key=token_provider,
+        use_responses_api=True
     )
 
 
