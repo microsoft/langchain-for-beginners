@@ -9,3 +9,5 @@ __pycache__/
 *.pyd
 *.log
 azure.yaml
+.env
+.env.example

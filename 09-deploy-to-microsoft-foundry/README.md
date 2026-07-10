@@ -187,11 +187,17 @@ $body = @{
     stream = $false
 } | ConvertTo-Json
 
-Invoke-RestMethod `
+$response = Invoke-RestMethod `
     -Uri http://localhost:8088/responses `
     -Method Post `
     -Body $body `
     -ContentType "application/json"
+
+$response.output |
+    Where-Object { $_.type -eq "message" } |
+    ForEach-Object { $_.content } |
+    Where-Object { $_.type -eq "output_text" } |
+    ForEach-Object { $_.text }
 ```
 
 **Bash:**
