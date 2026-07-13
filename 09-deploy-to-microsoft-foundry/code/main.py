@@ -9,7 +9,6 @@ Then send a non-streaming Responses request to http://localhost:8088/responses.
 
 import os
 
-from azure.identity import DefaultAzureCredential, get_bearer_token_provider
 from dotenv import load_dotenv
 from langchain.agents import create_agent
 from langchain_core.documents import Document
@@ -56,36 +55,21 @@ COURSE_NOTES = [
 
 def build_chat_model() -> ChatOpenAI:
     """Create a chat model for local course runs or Foundry hosted deployment."""
-    # Do not use AI_API_KEY for a hosted agent: it would inject a long-lived shared
-    # secret into the deployment. DefaultAzureCredential obtains short-lived Entra
-    # tokens from your Azure sign-in locally and the hosted agent identity in Foundry.
-    token_provider = get_bearer_token_provider(
-        DefaultAzureCredential(),
-        "https://ai.azure.com/.default",
-    )
 
-    # ChatOpenAI accepts this callable through its OpenAI-compatible api_key
-    # parameter and invokes it whenever an access token is needed.
     return ChatOpenAI(
         model=os.getenv("AI_MODEL"),
         base_url=os.getenv("AI_ENDPOINT"),
-        api_key=token_provider,
-        use_responses_api=True,
+        api_key=os.getenv("AI_API_KEY"),
     )
 
 
 def build_embeddings_model() -> OpenAIEmbeddings:
     """Create an embedding model using the Foundry endpoint and identity."""
 
-    token_provider = get_bearer_token_provider(
-        DefaultAzureCredential(),
-        "https://ai.azure.com/.default",
-    )
-
     return OpenAIEmbeddings(
         base_url=os.getenv("AI_ENDPOINT"),
         model=os.getenv("AI_EMBEDDING_MODEL", "text-embedding-3-small"),
-        api_key=token_provider,
+        api_key=os.getenv("AI_API_KEY"),
     )
 
 
