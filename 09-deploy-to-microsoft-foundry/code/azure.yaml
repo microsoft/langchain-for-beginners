@@ -18,6 +18,15 @@ services:
         memory: 1Gi
     description: Agentic RAG assistant built with LangChain and hosted in Microsoft Foundry.
     displayName: LangChain RAG Agent
+    environmentVariables:
+      - name: AI_ENDPOINT
+        value: ${AI_ENDPOINT}
+      - name: AI_MODEL
+        value: ${AI_MODEL}
+      - name: AI_EMBEDDING_MODEL
+        value: ${AI_EMBEDDING_MODEL}
+      - name: AI_API_KEY
+        value: ${AI_API_KEY}
     kind: hosted
     metadata:
       tags:

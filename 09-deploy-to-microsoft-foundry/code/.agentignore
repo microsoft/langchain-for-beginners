@@ -9,4 +9,5 @@ __pycache__/
 *.log
 azure.yaml
 .env.example
+.env
 .vscode/
