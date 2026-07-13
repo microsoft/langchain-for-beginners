@@ -126,6 +126,7 @@ Open your project in the Foundry portal. From the project overview and deploymen
 
 | Value                     | Variable                   | Example                                                                                                                                         | Used by                                                         |
 | ------------------------- | -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| Azure subscription ID     | `AZURE_SUBSCRIPTION_ID`    | `<subscription-id>`                                                                                                                             | `azd` when validating the active deployment environment         |
 | Project endpoint          | `FOUNDRY_PROJECT_ENDPOINT` | `https://<resource>.services.ai.azure.com/api/projects/<project>`                                                                               | `azd` when selecting the deployment target                      |
 | Project resource ID       | `AZURE_AI_PROJECT_ID`      | `/subscriptions/<subscription-id>/resourceGroups/<resource-group>/providers/Microsoft.CognitiveServices/accounts/<resource>/projects/<project>` | `azd` when identifying the existing project                     |
 | Azure region              | `AZURE_LOCATION`           | `swedencentral`                                                                                                                                 | `azd` when building and deploying the agent code                |
@@ -135,9 +136,9 @@ Open your project in the Foundry portal. From the project overview and deploymen
 
 `AI_ENDPOINT` is the project endpoint with `/openai/v1` appended. Do not use the inference endpoint as `FOUNDRY_PROJECT_ENDPOINT`.
 
-The project resource ID is the full Azure Resource Manager ID, not the project endpoint or project name. You can copy it from the project's JSON view in the Azure portal. Use the region of the parent Foundry resource for `AZURE_LOCATION`.
+The project resource ID is the full Azure Resource Manager ID, not the project endpoint or project name. You can copy it from the project's JSON view in the Azure portal. Set `AZURE_SUBSCRIPTION_ID` separately even though the same ID appears inside `AZURE_AI_PROJECT_ID`; azd does not extract it from the resource ID when checking whether the deployment environment is ready. Use the region of the parent Foundry resource for `AZURE_LOCATION`.
 
-Copy [`code/.env.example`](./code/.env.example) to a local `.env` file inside `code/`, then replace the placeholders. The local application does not need the three azd deployment values; you will store them in the azd environment in Step 5.
+Copy [`code/.env.example`](./code/.env.example) to a local `.env` file inside `code/`, then replace the placeholders. The local application does not need the four azd deployment values; you will store them in the azd environment in Step 5.
 
 ```bash
 AI_ENDPOINT=https://<resource>.services.ai.azure.com/api/projects/<project>/openai/v1
@@ -228,9 +229,9 @@ If the response says LangChain was created in 2022, embedding search, model auth
 
 ## Step 5: Deploy to an Existing Foundry Project with `azd`
 
-The [`code/`](./code/) folder is already an azd hosted-agent project. `AI_ENDPOINT` configures the running agent, but it does not tell `azd` where to deploy. For direct code deployment, azd separately requires the project endpoint, full resource ID, and Azure region collected in Step 2.
+The [`code/`](./code/) folder is already an azd hosted-agent project. `AI_ENDPOINT` configures the running agent, but it does not tell `azd` where to deploy. For direct code deployment, azd separately requires the subscription ID, project endpoint, full resource ID, and Azure region collected in Step 2.
 
-> **Existing project**: Do not run `azd provision` when the Foundry project and model deployments already exist. `azd provision` intentionally creates or updates Azure infrastructure; the steps below bind `azd deploy` directly to your existing project.
+> **Existing project**: Do not run `azd provision` when the Foundry project and model deployments already exist. With `infra.provider: microsoft.foundry`, provisioning can create a new resource group, Foundry resource, and project. If `azd deploy` suggests running `azd provision`, first confirm that all four deployment values below are set; the generic suggestion can also mean that `AZURE_SUBSCRIPTION_ID` is missing.
 
 Install the agent extension, sign in, and create a local azd environment:
 
@@ -247,16 +248,15 @@ If the environment already exists, select it instead:
 azd env select langchain-course # Or name of your existing environment
 ```
 
-Set the three deployment values from Step 2 in the active azd environment, followed by the runtime values from your `.env` file. Keep `/openai/v1` off `FOUNDRY_PROJECT_ENDPOINT`, and include the complete project resource ID in `AZURE_AI_PROJECT_ID`:
+Set the four deployment values from Step 2 in the active azd environment, followed by the runtime values from your `.env` file. Keep `/openai/v1` off `FOUNDRY_PROJECT_ENDPOINT`, and include the complete project resource ID in `AZURE_AI_PROJECT_ID`:
 
 ```bash
+azd env set AZURE_SUBSCRIPTION_ID "<subscription-id>"
 azd env set FOUNDRY_PROJECT_ENDPOINT "https://<resource>.services.ai.azure.com/api/projects/<project>"
 azd env set AZURE_AI_PROJECT_ID "/subscriptions/<subscription-id>/resourceGroups/<resource-group>/providers/Microsoft.CognitiveServices/accounts/<resource>/projects/<project>"
 azd env set AZURE_LOCATION "<azure-region>"
 
-azd env set AI_ENDPOINT "https://<resource>.services.ai.azure.com/openai/v1"
-azd env set AI_MODEL "<your-chat-model-deployment-name>"
-azd env set AI_EMBEDDING_MODEL "<your-embedding-model-deployment-name>"
+azd env set --file .\.env
 ```
 
 Verify that azd resolves the intended project before deploying:
@@ -266,7 +266,7 @@ azd ai project show --output json
 azd env get-values
 ```
 
-Check that `azd ai project show` prints the intended project endpoint without `/openai/v1` and resolves it from the active azd environment rather than the global config. In `azd env get-values`, confirm that `FOUNDRY_PROJECT_ENDPOINT`, `AZURE_AI_PROJECT_ID`, and `AZURE_LOCATION` are all set. Then deploy the source directly. Because `codeConfiguration` is present in `azure.yaml`, Foundry performs a remote build from `requirements.txt`:
+Check that `azd ai project show` prints the intended project endpoint without `/openai/v1` and resolves it from the active azd environment rather than the global config. In `azd env get-values`, confirm that `AZURE_SUBSCRIPTION_ID`, `FOUNDRY_PROJECT_ENDPOINT`, `AZURE_AI_PROJECT_ID`, and `AZURE_LOCATION` are all set. Then deploy the source directly. Because `codeConfiguration` is present in `azure.yaml`, Foundry performs a remote build from `requirements.txt`:
 
 ```bash
 azd deploy --no-prompt
@@ -296,7 +296,8 @@ To deploy from VS Code instead of the CLI:
 
 | Problem                                    | What to check                                                                                                                                                                                   |
 | ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `azd deploy` asks for `azd provision`      | For an existing project, set `FOUNDRY_PROJECT_ENDPOINT`, `AZURE_AI_PROJECT_ID`, and `AZURE_LOCATION` in the active azd environment. `azd ai project set` only sets a global default.            |
+| `azd deploy` asks for `azd provision`      | For an existing project, first check `AZURE_SUBSCRIPTION_ID`. Also verify `FOUNDRY_PROJECT_ENDPOINT`, `AZURE_AI_PROJECT_ID`, and `AZURE_LOCATION`; do not run `azd provision` unless you intend to create or update infrastructure. |
+| `AZURE_SUBSCRIPTION_ID` is not set         | Set it explicitly with `azd env set AZURE_SUBSCRIPTION_ID "<subscription-id>"`. azd does not derive it from the subscription segment inside `AZURE_AI_PROJECT_ID`.                       |
 | `no Foundry project endpoint resolved`     | Select the intended azd environment and set `FOUNDRY_PROJECT_ENDPOINT` without `/openai/v1`.                                                                                                    |
 | `Microsoft Foundry project ID is required` | Set `AZURE_AI_PROJECT_ID` to the project's full Azure Resource Manager ID, beginning with `/subscriptions/`.                                                                                    |
 | `AZURE_LOCATION is not set`                | Set `AZURE_LOCATION` to the Azure region of the existing Foundry resource, such as `swedencentral`.                                                                                             |
@@ -315,7 +316,7 @@ To deploy from VS Code instead of the CLI:
 - `OpenAIEmbeddings` and `InMemoryVectorStore` provide semantic retrieval without changing the hosted-agent wrapper
 - `ResponsesHostServer` exposes the graph through the Foundry Responses protocol
 - `DefaultAzureCredential` switches from your local Azure identity to the hosted agent identity without storing an API key
-- `FOUNDRY_PROJECT_ENDPOINT`, `AZURE_AI_PROJECT_ID`, and `AZURE_LOCATION` identify the deployment target, while `AI_ENDPOINT` is used for model inference
+- `AZURE_SUBSCRIPTION_ID`, `FOUNDRY_PROJECT_ENDPOINT`, `AZURE_AI_PROJECT_ID`, and `AZURE_LOCATION` identify the deployment target, while `AI_ENDPOINT` is used for model inference
 - Existing projects can be targeted with `azd deploy` without running `azd provision`
 
 ---
