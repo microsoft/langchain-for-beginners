@@ -8,7 +8,6 @@ Then send a non-streaming Responses request to http://localhost:8088/responses.
 """
 
 import os
-from urllib.parse import urlparse
 
 from azure.identity import DefaultAzureCredential, get_bearer_token_provider
 from dotenv import load_dotenv
@@ -84,8 +83,8 @@ def build_embeddings_model() -> OpenAIEmbeddings:
     )
 
     return OpenAIEmbeddings(
-        model=os.getenv("AI_EMBEDDING_MODEL", "text-embedding-3-small"),
         base_url=os.getenv("AI_ENDPOINT"),
+        model=os.getenv("AI_EMBEDDING_MODEL", "text-embedding-3-small"),
         api_key=token_provider,
     )
 
