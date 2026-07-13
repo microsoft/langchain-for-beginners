@@ -22,6 +22,4 @@ env/
 # Docs
 README.md
 
-# Local environment (never bake credentials into the image)
-.env
 .env.example
