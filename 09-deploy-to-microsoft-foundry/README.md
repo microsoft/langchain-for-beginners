@@ -2,7 +2,7 @@
 
 In this optional chapter, you'll take the LangChain agent you built in [Building Agentic RAG Systems](../08-agentic-rag-systems/README.md) and deploy it to **Microsoft Foundry** as a hosted agent. You'll keep the same `create_agent()` pattern, configure model access, test the hosting protocol locally, and deploy the code to an existing Foundry project.
 
-This chapter follows the [Microsoft Foundry hosted agent quickstart](https://learn.microsoft.com/azure/foundry/agents/quickstarts/quickstart-hosted-agent?pivots=vscode). It assumes you already have a Foundry project and model deployment. If you don't, use the quickstart or Foundry Toolkit to create them, then return to Step 2.
+This chapter follows the [Microsoft Foundry hosted agent quickstart](https://learn.microsoft.com/azure/foundry/agents/quickstarts/quickstart-hosted-agent). It assumes you already have a Foundry project and model deployment. If you don't, use the quickstart to create them, then return to Step 2.
 
 ## Prerequisites
 
@@ -12,7 +12,6 @@ This chapter follows the [Microsoft Foundry hosted agent quickstart](https://lea
 - **Foundry Project Manager** access on that project for hosted-agent deployment
 - Python 3.13 or later for source-code hosted agent deployment
 - [Azure Developer CLI](https://learn.microsoft.com/azure/developer/azure-developer-cli/install-azd) with the `azure.ai.agents` extension
-- Optional: VS Code with the [Microsoft Foundry Toolkit](https://aka.ms/foundrytk) for guided deployment
 
 > **Authentication**: `AI_API_KEY` configures model calls in the application, while `azd auth login` authenticates the deployment CLI in Step 5.
 
@@ -253,18 +252,6 @@ azd ai agent invoke "Explain agentic RAG in one paragraph."
 ```
 
 A successful deployment creates an immutable agent version. `azd ai agent show` should report an `active` or `deployed` status and list the Responses endpoint.
-
----
-
-## Step 6: Alternative Guided Deployment with Foundry Toolkit
-
-To deploy from VS Code instead of the CLI:
-
-1. Open `09-deploy-to-microsoft-foundry/code` as the active folder.
-2. Run **Foundry Toolkit: Deploy Hosted Agent** from the Command Palette.
-3. Choose **Code** and then **Remote** so Foundry installs `requirements.txt` during the build.
-4. Select the existing Foundry project, confirm the agent settings, and deploy.
-5. Open **Hosted Agents (Preview)** and test the deployed agent in the **Playground**.
 
 > **⚠️ Cleanup**: Hosted agents and model calls can incur Azure charges. Delete agents and resources that you created only for this exercise when you finish.
 
