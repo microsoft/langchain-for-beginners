@@ -39,18 +39,23 @@ The chapter files are:
 - **Code**: [`code/main.py`](./code/main.py)
 - **Hosted agent config**: [`code/azure.yaml`](./code/azure.yaml)
 - **Dependencies**: [`code/requirements.txt`](./code/requirements.txt)
-- **Environment template**: [`code/.env.example`](./code/.env.example)
+- **Environment template**: [`.env.example`](../.env.example) in the repository root
 
 The important hosting and authentication code is:
 
 ```python
 import os
+from pathlib import Path
 
+from dotenv import load_dotenv
 from langchain.agents import create_agent
 from langchain_core.tools import tool
 from langchain_core.vectorstores import InMemoryVectorStore
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain_azure_ai.agents.hosting import ResponsesHostServer
+
+
+load_dotenv()
 
 
 def build_chat_model():
@@ -108,30 +113,30 @@ Run the sample unchanged first. After it works, you can add your own documents o
 
 ## Step 2: Configure Your Foundry Project
 
-Create a new `.env` for Chapter 09 from the provided [`code/.env.example`](./code/.env.example).
+Chapter 09 uses the same `.env` file in the repository root for local testing and deployment.
+
+If you have not created the root `.env` yet, create it from [`.env.example`](../.env.example):
 
 **Windows PowerShell:**
 
 ```powershell
-Copy-Item 09-deploy-to-microsoft-foundry/code/.env.example 09-deploy-to-microsoft-foundry/code/.env
+Copy-Item .env.example .env
 ```
 
 **macOS or Linux:**
 
 ```bash
-cp 09-deploy-to-microsoft-foundry/code/.env.example 09-deploy-to-microsoft-foundry/code/.env
+cp .env.example .env
 ```
 
-The file must be saved at `09-deploy-to-microsoft-foundry/code/.env`. Open it and fill in all eight values:
+Open the root `.env` and add these four Chapter 09 deployment values:
 
 | Where to find the value                                           | Variables                                                        |
 | ----------------------------------------------------------------- | ---------------------------------------------------------------- |
 | Foundry portal, project overview                                  | `FOUNDRY_PROJECT_ENDPOINT`                                       |
 | Azure portal, the Foundry resource overview and project JSON view | `AZURE_SUBSCRIPTION_ID`, `AZURE_AI_PROJECT_ID`, `AZURE_LOCATION` |
-| Foundry portal, model deployments                                 | `AI_MODEL`, `AI_EMBEDDING_MODEL`                                 |
-| Foundry portal, model endpoint and key page                       | `AI_ENDPOINT`, `AI_API_KEY`                                      |
 
-Use model **deployment names**, not model catalog names. `AI_ENDPOINT` must be the model inference endpoint ending in `/openai/v1`, while `FOUNDRY_PROJECT_ENDPOINT` is the project endpoint ending in `/api/projects/<project>`. The repository ignores `.env`, and Step 5 imports this same file into the azd environment.
+`FOUNDRY_PROJECT_ENDPOINT` is the project endpoint ending in `/api/projects/<project>`. The repository ignores the root `.env`; `main.py` loads it for local testing, and Step 5 imports it into the azd environment.
 
 ---
 
@@ -159,7 +164,7 @@ If you are using GitHub Codespaces, the course environment is already activated;
 
 ## Step 4: Test the Hosted Wrapper Locally
 
-After completing the `.env` file in Step 2, run the host from the source folder:
+After completing the root `.env` file in Step 2, run the host from the source folder:
 
 ```bash
 cd 09-deploy-to-microsoft-foundry/code
@@ -222,10 +227,10 @@ If the environment already exists, select it instead:
 azd env select langchain-course # Or name of your existing environment
 ```
 
-Load the deployment and runtime values from your `.env` file into the active azd environment. Keep `/openai/v1` off `FOUNDRY_PROJECT_ENDPOINT`, and include the complete project resource ID in `AZURE_AI_PROJECT_ID`:
+Load the deployment and runtime values directly from the root `.env` file into the active azd environment. Because you are now in the Chapter 09 `code` folder, the root file is two directories above it. Keep `/openai/v1` off `FOUNDRY_PROJECT_ENDPOINT`, and include the complete project resource ID in `AZURE_AI_PROJECT_ID`:
 
 ```bash
-azd env set --file .\.env
+azd env set --file ../../.env
 ```
 
 Verify that azd resolves the intended project before deploying:
@@ -274,6 +279,7 @@ A successful deployment creates an immutable agent version. `azd ai agent show` 
 - `ResponsesHostServer` exposes the graph through the Foundry Responses protocol
 - `AI_ENDPOINT` and `AI_API_KEY` configure model access for both LangChain clients
 - `AZURE_SUBSCRIPTION_ID`, `FOUNDRY_PROJECT_ENDPOINT`, `AZURE_AI_PROJECT_ID`, and `AZURE_LOCATION` identify the deployment target, while `AI_ENDPOINT` is used for model inference
+- Chapter 09 uses the repository root `.env` for both local testing and `azd` configuration
 - Existing projects can be targeted with `azd deploy` without running `azd provision`
 
 ---

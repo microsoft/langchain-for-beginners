@@ -19,7 +19,7 @@ Adapt the agentic RAG system you built in Chapter 8 and deploy it to an existing
 
 1. In [`code/main.py`](./code/main.py), replace the sample course notes and retrieval tool with your own Chapter 8 documents and retrieval logic.
 2. Keep the `create_agent()` and `ResponsesHostServer` patterns, then update the system prompt for your knowledge base.
-3. Create `09-deploy-to-microsoft-foundry/code/.env` from [`code/.env.example`](./code/.env.example) and fill in all eight values.
+3. Add the four Chapter 09 deployment values to the root `.env`, using the [root `.env.example`](../.env.example) as a reference. Use this file for both local testing and deployment.
 4. Follow Step 4 in the [chapter README](./README.md#step-4-test-the-hosted-wrapper-locally) to test a non-streaming request at `http://localhost:8088/responses`.
 5. Follow Step 5 in the [chapter README](./README.md#step-5-deploy-to-an-existing-foundry-project-with-azd) to import the `.env` values, deploy with `azd deploy --no-prompt`, and verify the deployment with `azd ai agent show --output json`.
 6. Use `azd ai agent invoke` to ask at least three questions:
@@ -44,7 +44,7 @@ Adapt the agentic RAG system you built in Chapter 8 and deploy it to an existing
 Before completing this chapter:
 
 - [ ] Chapter 8 documents and retrieval logic are adapted in `code/main.py`
-- [ ] Chapter 09 `.env` is created from `code/.env.example` and all eight values are filled in
+- [ ] All four Chapter 09 deployment values are filled in within the root `.env`
 - [ ] Local hosted wrapper runs successfully
 - [ ] `azd ai agent show` reports an `active` or `deployed` agent
 - [ ] The deployed agent answers all three test-question types appropriately
