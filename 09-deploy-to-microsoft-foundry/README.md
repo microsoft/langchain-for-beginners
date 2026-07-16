@@ -38,7 +38,7 @@ The chapter files are:
 - **Project**: [`code/`](./code/)
 - **Code**: [`code/main.py`](./code/main.py)
 - **Hosted agent config**: [`code/azure.yaml`](./code/azure.yaml)
-- **Dependencies**: [`code/requirements.txt`](./code/requirements.txt)
+- **Deployment dependencies**: [`code/requirements.txt`](./code/requirements.txt)
 - **Environment template**: [`.env.example`](../.env.example) in the repository root
 
 The important hosting and authentication code is:
@@ -140,25 +140,9 @@ Open the root `.env` and add these four Chapter 09 deployment values:
 
 ---
 
-## Step 3: Install Hosted-Agent Dependencies
+## Step 3: Confirm Dependencies
 
-Use the same virtual environment style from [Course Setup](../00-course-setup/README.md). From the repository root, activate your existing course environment and install the hosted-agent sample requirements.
-
-**Windows PowerShell:**
-
-```powershell
-venv\Scripts\activate
-pip install -r 09-deploy-to-microsoft-foundry/code/requirements.txt
-```
-
-**macOS or Linux:**
-
-```bash
-source venv/bin/activate
-pip install -r 09-deploy-to-microsoft-foundry/code/requirements.txt
-```
-
-If you are using GitHub Codespaces, the course environment is already activated; run the same `pip install -r ...` command.
+No additional installation is required if you completed [Course Setup](../00-course-setup/README.md). The Chapter 09 [`code/requirements.txt`](./code/requirements.txt) matches the repository-root [`requirements.txt`](../requirements.txt) and is included so Foundry can install the same dependencies during deployment.
 
 ---
 
@@ -240,7 +224,7 @@ azd ai project show --output json
 azd env get-values
 ```
 
-Check that `azd ai project show` prints the intended project endpoint without `/openai/v1` and resolves it from the active azd environment rather than the global config. In `azd env get-values`, confirm that `AZURE_SUBSCRIPTION_ID`, `FOUNDRY_PROJECT_ENDPOINT`, `AZURE_AI_PROJECT_ID`, and `AZURE_LOCATION` are all set. Then deploy the source directly. Because `codeConfiguration` is present in `azure.yaml`, Foundry performs a remote build from `requirements.txt`:
+Check that `azd ai project show` prints the intended project endpoint without `/openai/v1` and resolves it from the active azd environment rather than the global config. In `azd env get-values`, confirm that `AZURE_SUBSCRIPTION_ID`, `FOUNDRY_PROJECT_ENDPOINT`, `AZURE_AI_PROJECT_ID`, and `AZURE_LOCATION` are all set. Then deploy the source directly. Because `codeConfiguration` is present in `azure.yaml`, Foundry performs a remote build using `code/requirements.txt`:
 
 ```bash
 azd deploy --no-prompt
