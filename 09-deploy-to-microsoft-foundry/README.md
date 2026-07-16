@@ -108,38 +108,30 @@ Run the sample unchanged first. After it works, you can add your own documents o
 
 ## Step 2: Configure Your Foundry Project
 
-Open your project in the Foundry portal. From the project overview and deployment pages, collect these values:
+Create a new `.env` for Chapter 09 from the provided [`code/.env.example`](./code/.env.example).
 
-| Value                     | Variable                   | Example                                                                                                                                         | Used by                                                         |
-| ------------------------- | -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
-| Azure subscription ID     | `AZURE_SUBSCRIPTION_ID`    | `<subscription-id>`                                                                                                                             | `azd` when validating the active deployment environment         |
-| Project endpoint          | `FOUNDRY_PROJECT_ENDPOINT` | `https://<resource>.services.ai.azure.com/api/projects/<project>`                                                                               | `azd` when selecting the deployment target                      |
-| Project resource ID       | `AZURE_AI_PROJECT_ID`      | `/subscriptions/<subscription-id>/resourceGroups/<resource-group>/providers/Microsoft.CognitiveServices/accounts/<resource>/projects/<project>` | `azd` when identifying the existing project                     |
-| Azure region              | `AZURE_LOCATION`           | `swedencentral`                                                                                                                                 | `azd` when building and deploying the agent code                |
-| Model inference endpoint  | `AI_ENDPOINT`              | `https://<resource>.services.ai.azure.com/openai/v1`                                                                                            | The running agent when calling the model                        |
-| Chat deployment name      | `AI_MODEL`                 | `gpt-4.1`                                                                                                                                       | `ChatOpenAI`; use the deployment name, not the model catalog ID |
-| Embedding deployment name | `AI_EMBEDDING_MODEL`       | `text-embedding-3-small`                                                                                                                        | `OpenAIEmbeddings`; use the deployment name                     |
-| Model API key             | `AI_API_KEY`               | `<api-key>`                                                                                                                                     | `ChatOpenAI` and `OpenAIEmbeddings` authentication              |
+**Windows PowerShell:**
 
-`AI_ENDPOINT` is the resource-level model inference endpoint ending in `/openai/v1`. It is separate from `FOUNDRY_PROJECT_ENDPOINT`, which identifies the Foundry project for deployment.
-
-The project resource ID is the full Azure Resource Manager ID, not the project endpoint or project name. You can copy it from the project's JSON view in the Azure portal. Set `AZURE_SUBSCRIPTION_ID` separately even though the same ID appears inside `AZURE_AI_PROJECT_ID`; azd does not extract it from the resource ID when checking whether the deployment environment is ready. Use the region of the parent Foundry resource for `AZURE_LOCATION`.
-
-Copy [`code/.env.example`](./code/.env.example) to a local `.env` file inside `code/`, then replace the placeholders. The local application reads the four `AI_*` runtime values; Step 5 imports the complete file, including the four deployment values, into the azd environment.
-
-```bash
-AZURE_SUBSCRIPTION_ID=<subscription-id>
-FOUNDRY_PROJECT_ENDPOINT=https://<resource>.services.ai.azure.com/api/projects/<project>
-AZURE_AI_PROJECT_ID=/subscriptions/<subscription-id>/resourceGroups/<resource-group>/providers/Microsoft.CognitiveServices/accounts/<resource>/projects/<project>
-AZURE_LOCATION=<azure-region>
-
-AI_ENDPOINT=https://<resource>.services.ai.azure.com/openai/v1
-AI_MODEL=<your-chat-model-deployment-name>
-AI_EMBEDDING_MODEL=<your-embedding-model-deployment-name>
-AI_API_KEY=<api-key>
+```powershell
+Copy-Item 09-deploy-to-microsoft-foundry/code/.env.example 09-deploy-to-microsoft-foundry/code/.env
 ```
 
-The repository ignores `.env`. Complete these eight values locally before running or deploying the sample.
+**macOS or Linux:**
+
+```bash
+cp 09-deploy-to-microsoft-foundry/code/.env.example 09-deploy-to-microsoft-foundry/code/.env
+```
+
+The file must be saved at `09-deploy-to-microsoft-foundry/code/.env`. Open it and fill in all eight values:
+
+| Where to find the value                                           | Variables                                                        |
+| ----------------------------------------------------------------- | ---------------------------------------------------------------- |
+| Foundry portal, project overview                                  | `FOUNDRY_PROJECT_ENDPOINT`                                       |
+| Azure portal, the Foundry resource overview and project JSON view | `AZURE_SUBSCRIPTION_ID`, `AZURE_AI_PROJECT_ID`, `AZURE_LOCATION` |
+| Foundry portal, model deployments                                 | `AI_MODEL`, `AI_EMBEDDING_MODEL`                                 |
+| Foundry portal, model endpoint and key page                       | `AI_ENDPOINT`, `AI_API_KEY`                                      |
+
+Use model **deployment names**, not model catalog names. `AI_ENDPOINT` must be the model inference endpoint ending in `/openai/v1`, while `FOUNDRY_PROJECT_ENDPOINT` is the project endpoint ending in `/api/projects/<project>`. The repository ignores `.env`, and Step 5 imports this same file into the azd environment.
 
 ---
 
@@ -262,14 +254,14 @@ A successful deployment creates an immutable agent version. `azd ai agent show` 
 | Problem                                    | What to check                                                                                                                                                                                                                       |
 | ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `azd deploy` asks for `azd provision`      | For an existing project, first check `AZURE_SUBSCRIPTION_ID`. Also verify `FOUNDRY_PROJECT_ENDPOINT`, `AZURE_AI_PROJECT_ID`, and `AZURE_LOCATION`; do not run `azd provision` unless you intend to create or update infrastructure. |
-| `agent.yaml` or `agent.yml` does not exist | The installed azd extensions might not support the inline agent configuration in `azure.yaml`. Run `azd extension upgrade --all`, then retry `azd deploy`.                                                                            |
+| `agent.yaml` or `agent.yml` does not exist | The installed azd extensions might not support the inline agent configuration in `azure.yaml`. Run `azd extension upgrade --all`, then retry `azd deploy`.                                                                          |
 | `AZURE_SUBSCRIPTION_ID` is not set         | Set it explicitly with `azd env set AZURE_SUBSCRIPTION_ID "<subscription-id>"`. azd does not derive it from the subscription segment inside `AZURE_AI_PROJECT_ID`.                                                                  |
 | `no Foundry project endpoint resolved`     | Select the intended azd environment and set `FOUNDRY_PROJECT_ENDPOINT` without `/openai/v1`.                                                                                                                                        |
 | `Microsoft Foundry project ID is required` | Set `AZURE_AI_PROJECT_ID` to the project's full Azure Resource Manager ID, beginning with `/subscriptions/`.                                                                                                                        |
 | `AZURE_LOCATION is not set`                | Set `AZURE_LOCATION` to the Azure region of the existing Foundry resource, such as `swedencentral`.                                                                                                                                 |
-| Model request returns `401` or `403`       | Confirm that `AI_API_KEY` and `AI_ENDPOINT` came from the same Foundry resource.                                                                                                                                                   |
-| `DeploymentNotFound` or `ResourceNotFound` | Check that `AI_MODEL` and `AI_EMBEDDING_MODEL` are deployment names and that `AI_ENDPOINT` belongs to the same Foundry resource.                                                                                                   |
-| Embedding request returns `404`            | Confirm that `AI_ENDPOINT` ends in `/openai/v1` and that `AI_EMBEDDING_MODEL` names an embedding deployment on that resource.                                                                                                      |
+| Model request returns `401` or `403`       | Confirm that `AI_API_KEY` and `AI_ENDPOINT` came from the same Foundry resource.                                                                                                                                                    |
+| `DeploymentNotFound` or `ResourceNotFound` | Check that `AI_MODEL` and `AI_EMBEDDING_MODEL` are deployment names and that `AI_ENDPOINT` belongs to the same Foundry resource.                                                                                                    |
+| Embedding request returns `404`            | Confirm that `AI_ENDPOINT` ends in `/openai/v1` and that `AI_EMBEDDING_MODEL` names an embedding deployment on that resource.                                                                                                       |
 | Local request reports connection refused   | Keep `python main.py` running and confirm that port `8088` is available.                                                                                                                                                            |
 | A new deployment is temporarily not ready  | Wait for `azd ai agent show` to report `active` or `deployed`, then invoke it again.                                                                                                                                                |
 
