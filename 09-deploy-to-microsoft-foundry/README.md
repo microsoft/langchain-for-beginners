@@ -15,6 +15,12 @@ This chapter follows the [Microsoft Foundry hosted agent quickstart](https://lea
 
 > **Authentication**: `AI_API_KEY` configures model calls in the application, while `azd auth login` authenticates the deployment CLI in Step 5.
 
+> **Use your existing virtual environment**: Before running the commands in this chapter, make sure the Python virtual environment you created in [Course Setup](../00-course-setup/README.md#step-2-clone-the-repository) is active. Do not create a separate environment for Chapter 09. In GitHub Codespaces, `.venv` is activated automatically. For local development, reactivate the environment from the repository root if needed:
+>
+> **Windows:** `venv\Scripts\activate`
+>
+> **macOS or Linux:** `source venv/bin/activate`
+
 ## 🎯 Learning Objectives
 
 By the end of this chapter, you'll be able to:
