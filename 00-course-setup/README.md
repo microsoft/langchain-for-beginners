@@ -218,6 +218,13 @@ Model response: Setup successful!
 
 If you see this, you're all set! If not, check the troubleshooting section below.
 
+You may recieve the following 
+
+```bash
+❌ ERROR: Error code: 400 - {'error': {'code': 'unavailable_model', 'message': 'Unavailable model: gpt-5', 'details': 'Unavailable model: gpt-5'}}
+```
+Change the model to get round this you can see the full list at - (https://github.com/marketplace/models)
+
 ---
 
 ## ✅ Setup Checklist
