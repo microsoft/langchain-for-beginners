@@ -526,7 +526,7 @@ Use Pydantic models to get type-safe, structured data from LLMs. This ensures yo
 
 ### The Schema Analogy
 
-![Structured Output](./images/structured-output.png)
+![Structured Output](./images/structured-output1.png)
 
 Think of structured outputs like a form:
 - You define the fields (name, email, age)
