@@ -1,0 +1,43 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/Azure/azure-dev/main/schemas/v1.0/azure.yaml.json
+
+requiredVersions:
+    extensions:
+        azure.ai.agents: '>=1.0.0-beta.4'
+name: langchain-rag-agent
+services:
+    langchain-rag-agent:
+        project: .
+        host: azure.ai.agent
+        language: python
+        codeConfiguration:
+            entryPoint: main.py
+            runtime: python_3_13
+        container:
+            resources:
+                cpu: "0.5"
+                memory: 1Gi
+        description: Agentic RAG assistant built with LangChain and hosted in Microsoft Foundry.
+        displayName: LangChain RAG Agent
+        environmentVariables:
+            - name: AI_ENDPOINT
+              value: ${AI_ENDPOINT}
+            - name: AI_MODEL
+              value: ${AI_MODEL}
+            - name: AI_EMBEDDING_MODEL
+              value: ${AI_EMBEDDING_MODEL}
+            - name: AI_API_KEY
+              value: ${AI_API_KEY}
+        kind: hosted
+        metadata:
+            tags:
+                - AI Agent Hosting
+                - Responses Protocol
+                - LangChain
+                - Agentic RAG
+                - Python
+        name: langchain-rag-agent
+        protocols:
+            - protocol: responses
+              version: 2.0.0
+infra:
+    provider: microsoft.foundry

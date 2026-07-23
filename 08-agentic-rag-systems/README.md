@@ -420,13 +420,15 @@ pip install langchain langchain-openai langchain-core langgraph python-dotenv
 
 ## 🗺️ Navigation
 
-[← Previous: Documents & Embeddings](../07-documents-embeddings-semantic-search/README.md) | [Back to Main](../README.md)
+[← Previous: Documents & Embeddings](../07-documents-embeddings-semantic-search/README.md) | [Back to Main](../README.md) | [Next: Deploy to Microsoft Foundry →](../09-deploy-to-microsoft-foundry/README.md)
 
 ---
 
-## 🎉 Congratulations!
+## 🚀 Next Step
 
-You've completed the LangChain for Beginners course! You've learned:
+You've built intelligent Agentic RAG systems. In the next optional chapter, you'll learn how to deploy a LangChain agent to Microsoft Foundry as a hosted agent.
+
+So far, you've learned:
 
 1. ✅ Setting up your Python environment for LangChain
 2. ✅ Understanding LangChain's architecture and components
@@ -438,10 +440,7 @@ You've completed the LangChain for Beginners course! You've learned:
 8. ✅ Processing documents with embeddings and vector stores
 9. ✅ Building intelligent Agentic RAG systems
 
-**What's next?**
-- Explore more [LangChain integrations](https://python.langchain.com/docs/integrations/)
-- Learn about [LangGraph](https://langchain-ai.github.io/langgraph/) for complex workflows
-- Build production applications with [LangSmith](https://docs.smith.langchain.com/)
+Continue to [Deploy LangChain Agents to Microsoft Foundry](../09-deploy-to-microsoft-foundry/README.md) when you're ready to take your local agent into a hosted cloud environment.
 
 ---
 

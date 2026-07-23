@@ -15,7 +15,7 @@ A course teaching everything you need to know to start building AI Agents with L
 
 ## 🦜🔗 Welcome
 
-Welcome to **LangChain for Beginners**! This course will cover the fundamentals of building with LangChain and Python. It contains [**9 chapters**](#-table-of-contents) that each focus on a specific concept. To **get started** right away you can navigate to the [course-setup](/00-course-setup/) chapter, but you're encouraged to read the overview below first.
+Welcome to **LangChain for Beginners**! This course will cover the fundamentals of building with LangChain and Python. It contains [**10 chapters**](#-table-of-contents) that each focus on a specific concept. To **get started** right away you can navigate to the [course-setup](/00-course-setup/) chapter, but you're encouraged to read the overview below first.
 
 ### What You'll Learn and Build
 
@@ -27,6 +27,7 @@ This course takes you from zero to building robust AI applications:
 - **Autonomous Agents** - Build agents that reason, make decisions, and choose tools autonomously
 - **MCP Integration** - Connect AI to external services using the Model Context Protocol standard
 - **Agentic RAG** - Build intelligent Q&A systems where agents decide when to search your knowledge base
+- **Microsoft Foundry Deployment** - Deploy your LangChain agent as a hosted agent with VS Code or Azure Developer CLI
 
 **By the end**, you'll have a solid understanding of LangChain and understand how to build real AI applications you can deploy!
 
@@ -38,7 +39,7 @@ Don't forget to [star (🌟)](https://github.com/microsoft/langchain-for-beginne
 
 ## 📚 Table of Contents
 
-This course contains **9 chapters** (setup + 8 chapters), each building on the previous to teach you LangChain from the ground up. Each chapter includes conceptual explanations, working code examples, and hands-on challenges.
+This course contains **10 chapters** (setup + 9 chapters), each building on the previous to teach you LangChain from the ground up. Each chapter includes conceptual explanations, working code examples, and hands-on challenges.
 
 | # | Chapter | Description | Key Concepts |
 |---|---------|-------------|--------------|
@@ -51,6 +52,7 @@ This course contains **9 chapters** (setup + 8 chapters), each building on the p
 | 6 | [Model Context Protocol (MCP)](./06-mcp/README.md) | Connect AI to external services using the MCP standard | MCP servers, stdio transports, tool integration, multi-server patterns |
 | 7 | [Documents, Embeddings & Semantic Search](./07-documents-embeddings-semantic-search/README.md) | Loading documents, creating embeddings, and building semantic search | Document loading, chunking, vector embeddings, similarity search |
 | 8 | [Building Agentic RAG Systems](./08-agentic-rag-systems/README.md) | Building RAG systems where agents intelligently decide when to search documents | Agentic RAG (agents decide when to search), retrieval tools, intelligent Q&A |
+| 9 | [Deploy LangChain Agents to Microsoft Foundry](./09-deploy-to-microsoft-foundry/README.md) | Deploy your LangChain agent as a Microsoft Foundry hosted agent | Hosted agents, Responses protocol, VS Code deployment, Azure Developer CLI |
 
 Each chapter includes:
 - 📖 **Conceptual explanations** with real-world analogies

@@ -1,0 +1,13 @@
+.azure/
+.foundry/
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.log
+azure.yaml
+.env.example
+.env
+.vscode/

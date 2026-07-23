@@ -1,0 +1,12 @@
+# LangChain packages
+langchain-openai>=1.1.0
+langchain-core>=1.1.0
+langchain>=1.1.0
+langchain-azure-ai[hosting]>=1.2.8
+langchain-mcp-adapters>=0.1.14
+
+# Microsoft Foundry hosted agent runtime
+azure-ai-projects>=2.2.0
+
+# Utilities
+python-dotenv>=1.2.1
