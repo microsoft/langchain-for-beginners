@@ -385,7 +385,7 @@ Limits response length:
 
 ### Example 3: Model Parameters
 
-Let's see how to control creativity by adjusting the `temperature` parameter and legnth of response by adjusting the `max_tokens` parameter in `ChatOpenAI`.
+Let's see how to control creativity by adjusting the `temperature` parameter and length of response by adjusting the `max_tokens` parameter in `ChatOpenAI`.
 
 **Key code you'll work with:**
 
